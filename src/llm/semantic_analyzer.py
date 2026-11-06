@@ -2,7 +2,8 @@
 """
 src/llm/semantic_analyzer.py
 
-Episode-level LLM analysis and AI-assisted promo boundary optimization.
+Episode-level LLM analysis, AI-assisted promo boundary optimization,
+and final promo evaluation.
 
 Pipeline:
 1. Process episodes chronologically.
@@ -11,7 +12,10 @@ Pipeline:
 4. Validate candidates against original screenplay segments.
 5. Generate boundary alternatives using Python.
 6. Use a separate LLM stage to select the best boundary alternative.
-7. Cache successful results and track API usage.
+7. Evaluate optimized promos for hook, cliffhanger, clarity, emotional impact,
+   and overall promotional suitability.
+8. Calculate weighted scores and recommendations in Python.
+9. Cache successful results and track API usage.
 
 Legacy window-level analysis remains available during migration.
 """
@@ -31,9 +35,11 @@ from src.llm.prompts import (
     build_analysis_prompt,
     build_episode_analysis_prompt,
     build_boundary_optimization_prompt,
+    build_promo_evaluation_prompt,
     generate_boundary_options,
     validate_episode_analysis_response,
     validate_boundary_optimization_response,
+    validate_promo_evaluation_response,
     validate_llm_response,
 )
 
@@ -51,16 +57,19 @@ LLM_FEATURE_KEYS = (
 
 _ANALYSIS_VERSION = "episode_analysis_v1"
 _BOUNDARY_VERSION = "boundary_optimization_v1"
+_EVALUATION_VERSION = "promo_evaluation_v1"
+
 _MAX_RUNNING_SUMMARY_CHARS = 6000
 
 
 class SemanticAnalyzer:
     """
-    Orchestrates episode-level analysis and boundary optimization.
+    Orchestrates episode analysis, boundary optimization, and promo evaluation.
 
-    New public methods:
+    Public methods:
         analyze_episodes(episodes)
         optimize_boundaries(episodes, candidates)
+        evaluate_promos(episodes, candidates)
 
     Legacy public method:
         analyze_batch(windows, det_scores)
@@ -71,17 +80,21 @@ class SemanticAnalyzer:
         cfg: Config,
         cache_dir: str | Path = "outputs/cache/episode_analysis",
         boundary_cache_dir: str | Path = "outputs/cache/boundary_optimization",
+        evaluation_cache_dir: str | Path = "outputs/cache/promo_evaluation",
     ) -> None:
         self.cfg = cfg
 
         self.cache_dir = Path(cache_dir)
         self.boundary_cache_dir = Path(boundary_cache_dir)
+        self.evaluation_cache_dir = Path(evaluation_cache_dir)
 
         self._client: LLMClient | None = None
         self._boundary_client: LLMClient | None = None
+        self._evaluation_client: LLMClient | None = None
 
         self._available = False
         self._boundary_available = False
+        self._evaluation_available = False
 
         self.stats: dict[str, Any] = {
             "episodes_received": 0,
@@ -100,6 +113,17 @@ class SemanticAnalyzer:
             "boundary_api_calls": 0,
             "boundary_successful_calls": 0,
             "boundary_failed_calls": 0,
+
+            "evaluation_candidates_received": 0,
+            "evaluation_candidates_evaluated": 0,
+            "evaluation_candidates_cached": 0,
+            "evaluation_candidates_failed": 0,
+            "evaluation_api_calls": 0,
+            "evaluation_successful_calls": 0,
+            "evaluation_failed_calls": 0,
+            "evaluation_accepted": 0,
+            "evaluation_review": 0,
+            "evaluation_rejected": 0,
         }
 
         if not cfg.llm_enabled:
@@ -120,10 +144,7 @@ class SemanticAnalyzer:
             )
 
         except LLMUnavailable as exc:
-            logger.warning(
-                "Episode analysis LLM unavailable: %s",
-                exc,
-            )
+            logger.warning("Episode analysis LLM unavailable: %s", exc)
 
     @property
     def is_available(self) -> bool:
@@ -156,10 +177,7 @@ class SemanticAnalyzer:
             )
             return []
 
-        ordered_episodes = sorted(
-            episodes,
-            key=self._episode_sort_key,
-        )
+        ordered_episodes = sorted(episodes, key=self._episode_sort_key)
 
         running_summary = ""
         results: list[dict] = []
@@ -190,7 +208,6 @@ class SemanticAnalyzer:
 
                 if analysis is None:
                     self.stats["episodes_failed"] += 1
-
                     results.append({
                         "episode": episode_name,
                         "episode_summary": "",
@@ -203,7 +220,6 @@ class SemanticAnalyzer:
 
                 analysis["episode"] = episode_name
                 analysis["analysis_status"] = "success"
-
                 results.append(analysis)
 
                 self.stats["episodes_analyzed"] += 1
@@ -270,10 +286,7 @@ class SemanticAnalyzer:
         cached = self._read_cache(cache_path)
 
         if cached is not None:
-            validated = validate_episode_analysis_response(
-                cached,
-                episode,
-            )
+            validated = validate_episode_analysis_response(cached, episode)
 
             if validated is not None:
                 self.stats["episodes_cached"] += 1
@@ -292,7 +305,6 @@ class SemanticAnalyzer:
                 episode_number=episode_name,
                 max_candidates=max_candidates,
             )
-
         except Exception as exc:
             logger.error(
                 "Could not build episode prompt for %s: %s",
@@ -305,7 +317,6 @@ class SemanticAnalyzer:
 
         try:
             raw_response = self._client.call_json(prompt)
-
         except Exception as exc:
             self.stats["failed_calls"] += 1
             logger.error(
@@ -350,12 +361,10 @@ class SemanticAnalyzer:
         """
         Optimize candidate start/end boundaries using a separate LLM stage.
 
-        Python first generates valid boundary alternatives. The LLM selects
-        one of those alternatives. It cannot invent timestamps or segment IDs.
+        Python generates valid boundary alternatives. The LLM selects
+        one of those alternatives and cannot invent timestamps or IDs.
 
-        Returns copies of all input candidates. Successful candidates receive
-        optimized boundary fields. Failed candidates retain their original
-        boundaries and receive boundary_status="failed".
+        Returns copies of all input candidates.
         """
 
         self.stats["boundary_candidates_received"] = len(candidates)
@@ -376,7 +385,6 @@ class SemanticAnalyzer:
             for episode in episodes
         }
 
-        # Initialize this client only when the boundary stage is actually used.
         if self._boundary_client is None and not self._boundary_available:
             try:
                 self._boundary_client = LLMClient.from_config(
@@ -412,7 +420,6 @@ class SemanticAnalyzer:
         for index, candidate in enumerate(candidates):
             result = dict(candidate)
             episode_name = str(candidate.get("episode", ""))
-
             episode = episode_map.get(episode_name)
 
             if episode is None:
@@ -447,7 +454,6 @@ class SemanticAnalyzer:
                     "Unexpected boundary optimization failure for candidate %s.",
                     candidate.get("candidate_id", index),
                 )
-
                 result["boundary_status"] = "failed"
                 self.stats["boundary_candidates_failed"] += 1
                 optimized_candidates.append(result)
@@ -516,7 +522,6 @@ class SemanticAnalyzer:
                 candidate=candidate,
                 options=options,
             )
-
         except Exception as exc:
             logger.error(
                 "Could not build boundary prompt for %s: %s",
@@ -529,7 +534,6 @@ class SemanticAnalyzer:
 
         try:
             raw_response = self._boundary_client.call_json(prompt)
-
         except Exception as exc:
             self.stats["boundary_failed_calls"] += 1
             logger.error(
@@ -571,11 +575,7 @@ class SemanticAnalyzer:
         validated: dict,
         raw_response: dict,
     ) -> dict:
-        """
-        Convert a validated boundary selection into candidate fields.
-
-        The original candidate's narrative information is preserved.
-        """
+        """Convert a validated boundary selection into candidate fields."""
 
         return {
             "start_segment_id": validated["start_segment_id"],
@@ -618,9 +618,7 @@ class SemanticAnalyzer:
             serialized.encode("utf-8")
         ).hexdigest()
 
-        candidate_id = str(
-            candidate.get("candidate_id", "unknown")
-        )
+        candidate_id = str(candidate.get("candidate_id", "unknown"))
 
         safe_candidate_id = "".join(
             char if char.isalnum() or char in ("-", "_") else "_"
@@ -629,6 +627,303 @@ class SemanticAnalyzer:
 
         return (
             self.boundary_cache_dir
+            / f"{safe_candidate_id}_{digest[:16]}.json"
+        )
+
+    # ========================================================
+    # PROMO EVALUATION
+    # ========================================================
+
+    def evaluate_promos(
+        self,
+        episodes: list[dict],
+        candidates: list[dict],
+    ) -> list[dict]:
+        """
+        Evaluate boundary-optimized promo candidates.
+
+        Only candidates with boundary_status="success" are evaluated.
+        Candidates whose boundary optimization was skipped or failed are
+        preserved and marked for manual review.
+
+        The evaluation validator calculates the weighted score and
+        recommendation in Python.
+        """
+
+        self.stats["evaluation_candidates_received"] = len(candidates)
+
+        if not candidates:
+            logger.info("No candidates supplied for promo evaluation.")
+            return []
+
+        if not self.cfg.llm_enabled:
+            logger.warning("Promo evaluation skipped: LLM is disabled.")
+            return [
+                {
+                    **candidate,
+                    "evaluation_status": "skipped",
+                    "recommendation": "review",
+                }
+                for candidate in candidates
+            ]
+
+        episode_map = {
+            str(episode.get("episode", "")): episode
+            for episode in episodes
+        }
+
+        if (
+            self._evaluation_client is None
+            and not self._evaluation_available
+        ):
+            try:
+                self._evaluation_client = LLMClient.from_config(
+                    self.cfg,
+                    stage="promo_evaluation",
+                )
+                self._evaluation_available = True
+
+                logger.info(
+                    "Promo evaluation client initialized: "
+                    "provider=%s, model=%s",
+                    self._evaluation_client.provider,
+                    self._evaluation_client.model,
+                )
+
+            except LLMUnavailable as exc:
+                logger.warning(
+                    "Promo evaluation client unavailable: %s",
+                    exc,
+                )
+
+        if (
+            not self._evaluation_available
+            or self._evaluation_client is None
+        ):
+            logger.warning(
+                "Promo evaluation skipped because its LLM is unavailable."
+            )
+            return [
+                {
+                    **candidate,
+                    "evaluation_status": "skipped",
+                    "recommendation": "review",
+                }
+                for candidate in candidates
+            ]
+
+        evaluated_candidates: list[dict] = []
+
+        for index, candidate in enumerate(candidates):
+            result = dict(candidate)
+            candidate_id = candidate.get("candidate_id", index)
+
+            # Do not evaluate clips whose boundaries were not validated.
+            if candidate.get("boundary_status") != "success":
+                result["evaluation_status"] = "skipped"
+                result["evaluation_error"] = "boundary_not_optimized"
+                result["recommendation"] = "review"
+                evaluated_candidates.append(result)
+                continue
+
+            episode_name = str(candidate.get("episode", ""))
+            episode = episode_map.get(episode_name)
+
+            if episode is None:
+                result["evaluation_status"] = "failed"
+                result["evaluation_error"] = "source_episode_not_found"
+                result["recommendation"] = "review"
+                self.stats["evaluation_candidates_failed"] += 1
+                evaluated_candidates.append(result)
+                continue
+
+            try:
+                evaluation = self._evaluate_single_candidate(
+                    episode=episode,
+                    candidate=candidate,
+                )
+
+                if evaluation is None:
+                    result["evaluation_status"] = "failed"
+                    result["recommendation"] = "review"
+                    self.stats["evaluation_candidates_failed"] += 1
+                else:
+                    result.update(evaluation)
+                    self.stats["evaluation_candidates_evaluated"] += 1
+
+                    recommendation = result.get("recommendation")
+
+                    if recommendation == "accept":
+                        self.stats["evaluation_accepted"] += 1
+                    elif recommendation == "reject":
+                        self.stats["evaluation_rejected"] += 1
+                    else:
+                        self.stats["evaluation_review"] += 1
+
+                evaluated_candidates.append(result)
+
+            except Exception:
+                logger.exception(
+                    "Unexpected promo evaluation failure for candidate %s.",
+                    candidate_id,
+                )
+                result["evaluation_status"] = "failed"
+                result["evaluation_error"] = "unexpected_evaluation_error"
+                result["recommendation"] = "review"
+                self.stats["evaluation_candidates_failed"] += 1
+                evaluated_candidates.append(result)
+
+        logger.info(
+            "Promo evaluation complete: %d evaluated, %d failed, "
+            "%d cached, %d accepted, %d review, %d rejected, "
+            "%d API calls.",
+            self.stats["evaluation_candidates_evaluated"],
+            self.stats["evaluation_candidates_failed"],
+            self.stats["evaluation_candidates_cached"],
+            self.stats["evaluation_accepted"],
+            self.stats["evaluation_review"],
+            self.stats["evaluation_rejected"],
+            self.stats["evaluation_api_calls"],
+        )
+
+        return evaluated_candidates
+
+    def _evaluate_single_candidate(
+        self,
+        episode: dict,
+        candidate: dict,
+    ) -> dict | None:
+        """Build, call, validate and cache one promo evaluation."""
+
+        candidate_id = str(candidate.get("candidate_id", "UNKNOWN"))
+
+        cache_path = self._get_evaluation_cache_path(
+            episode,
+            candidate,
+        )
+
+        cached = self._read_cache(cache_path)
+
+        if cached is not None:
+            validated = validate_promo_evaluation_response(
+                cached,
+                candidate,
+                episode,
+            )
+
+            if validated is not None:
+                self.stats["evaluation_candidates_cached"] += 1
+                logger.info(
+                    "Using cached promo evaluation for %s.",
+                    candidate_id,
+                )
+                return self._format_evaluation_result(validated)
+
+            logger.warning(
+                "Cached promo evaluation failed validation for %s.",
+                candidate_id,
+            )
+
+        try:
+            prompt = build_promo_evaluation_prompt(
+                episode=episode,
+                candidate=candidate,
+            )
+        except Exception as exc:
+            logger.error(
+                "Could not build promo evaluation prompt for %s: %s",
+                candidate_id,
+                exc,
+            )
+            return None
+
+        self.stats["evaluation_api_calls"] += 1
+
+        try:
+            raw_response = self._evaluation_client.call_json(prompt)
+        except Exception as exc:
+            self.stats["evaluation_failed_calls"] += 1
+            logger.error(
+                "Promo evaluation API call failed for %s: %s",
+                candidate_id,
+                exc,
+            )
+            return None
+
+        if raw_response is None:
+            self.stats["evaluation_failed_calls"] += 1
+            logger.warning(
+                "Promo evaluation LLM returned no response for %s.",
+                candidate_id,
+            )
+            return None
+
+        validated = validate_promo_evaluation_response(
+            raw_response,
+            candidate,
+            episode,
+        )
+
+        if validated is None:
+            self.stats["evaluation_failed_calls"] += 1
+            logger.warning(
+                "Promo evaluation response validation failed for %s.",
+                candidate_id,
+            )
+            return None
+
+        self.stats["evaluation_successful_calls"] += 1
+        self._write_cache(cache_path, raw_response)
+
+        return self._format_evaluation_result(validated)
+
+    @staticmethod
+    def _format_evaluation_result(validated: dict) -> dict:
+        """Return normalized evaluation fields for a candidate."""
+
+        return {
+            "evaluation_status": "success",
+            "evaluation_scores": validated["dimension_scores"],
+            "evaluation_assessments": validated["assessments"],
+            "overall_score": validated["overall_score"],
+            "recommendation": validated["recommendation"],
+            "primary_weakness": validated.get("major_weakness", ""),
+            "evaluation_weights": validated["evaluation_weights"],
+            "evaluation_duration_seconds": validated["duration_seconds"],
+    }
+    def _get_evaluation_cache_path(
+        self,
+        episode: dict,
+        candidate: dict,
+    ) -> Path:
+        """Generate a cache key for a promo evaluation."""
+
+        payload = {
+            "version": _EVALUATION_VERSION,
+            "episode": episode,
+            "candidate": candidate,
+        }
+
+        serialized = json.dumps(
+            payload,
+            sort_keys=True,
+            ensure_ascii=False,
+            default=str,
+        )
+
+        digest = hashlib.sha256(
+            serialized.encode("utf-8")
+        ).hexdigest()
+
+        candidate_id = str(candidate.get("candidate_id", "unknown"))
+
+        safe_candidate_id = "".join(
+            char if char.isalnum() or char in ("-", "_") else "_"
+            for char in candidate_id
+        )
+
+        return (
+            self.evaluation_cache_dir
             / f"{safe_candidate_id}_{digest[:16]}.json"
         )
 
@@ -674,7 +969,6 @@ class SemanticAnalyzer:
 
         if len(combined) > _MAX_RUNNING_SUMMARY_CHARS:
             combined = combined[-_MAX_RUNNING_SUMMARY_CHARS:]
-
             first_newline = combined.find("\n")
 
             if first_newline >= 0:
@@ -754,7 +1048,6 @@ class SemanticAnalyzer:
 
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-
             temporary_path = path.with_suffix(".tmp")
 
             with temporary_path.open("w", encoding="utf-8") as file:
@@ -861,6 +1154,3 @@ def merge_llm_features(
     )
 
     return merged
-
-
-

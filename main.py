@@ -2,22 +2,20 @@
 #!/usr/bin/env python3
 """
 main.py - PromoFinder AI
-========================
 
 Episode-level promotional moment discovery pipeline.
 
-Implemented stages:
+Stages:
 1. Load and validate parsed screenplay episodes.
 2. Analyze each complete episode once using the LLM.
 3. Carry a running story summary between episodes.
 4. Discover candidate promotional moments with source segment IDs.
-5. Validate candidate timestamps, duration and source continuity.
-6. Calculate generic structural signals.
-7. Pre-rank candidates while preserving episode diversity.
-8. Optimize shortlisted candidate boundaries using a separate LLM stage.
-9. Save discovery and boundary optimization outputs.
-
-Final semantic promo evaluation and ranking will follow.
+5. Calculate generic structural signals.
+6. Pre-rank candidates while preserving episode diversity.
+7. Optimize shortlisted candidate boundaries.
+8. Evaluate optimized promos using five semantic dimensions.
+9. Rank, separate and save final promotional candidates.
+10. Save execution statistics.
 """
 
 from __future__ import annotations
@@ -85,7 +83,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--shortlist-size",
         type=int,
         default=30,
-        help="Number of candidates retained for later AI evaluation.",
+        help="Number of candidates retained for AI evaluation.",
     )
 
     parser.add_argument(
@@ -109,11 +107,14 @@ def calculate_structural_signals(
     """
     Calculate show-agnostic structural signals.
 
-    These signals support pre-ranking. They do not attempt to
-    understand emotions, betrayal, suspense or narrative meaning.
+    These support preliminary selection. They do not attempt
+    to understand emotions or narrative meaning.
     """
 
-    selected_ids = set(candidate.get("segment_ids", []))
+    selected_ids = {
+        str(item)
+        for item in candidate.get("segment_ids", [])
+    }
 
     segments = [
         segment
@@ -238,7 +239,10 @@ def prepare_discovered_candidates(
         }
 
         for candidate in analysis.get("candidate_moments", []):
-            segment_ids = candidate.get("segment_ids", [])
+            segment_ids = [
+                str(item)
+                for item in candidate.get("segment_ids", [])
+            ]
 
             source_excerpt = [
                 segment_map[segment_id]
@@ -353,12 +357,7 @@ def refresh_candidate_source_segments(
     candidates: list[dict],
     episodes: list[dict],
 ) -> list[dict]:
-    """
-    Refresh source_segments after boundary optimization.
-
-    Only the segment IDs selected by the final boundary decision
-    are included. Original boundaries remain unchanged on failure.
-    """
+    """Refresh source excerpts after boundary optimization."""
 
     episode_map = {
         str(episode.get("episode")): episode
@@ -383,7 +382,10 @@ def refresh_candidate_source_segments(
             if segment.get("segment_id") is not None
         }
 
-        segment_ids = result.get("segment_ids", [])
+        segment_ids = [
+            str(item)
+            for item in result.get("segment_ids", [])
+        ]
 
         source_excerpt = [
             segment_map[segment_id]
@@ -403,6 +405,54 @@ def refresh_candidate_source_segments(
         refreshed.append(result)
 
     return refreshed
+
+
+# ============================================================
+# FINAL RANKING
+# ============================================================
+
+def rank_evaluated_candidates(
+    candidates: list[dict],
+) -> tuple[list[dict], list[dict]]:
+    """
+    Rank candidates using semantic evaluation results.
+
+    Preliminary structural scores are not used for final ranking.
+    Failed or skipped evaluations remain available for human review.
+    """
+
+    recommendation_priority = {
+        "accept": 0,
+        "review": 1,
+        "reject": 2,
+    }
+
+    ranked = sorted(
+        candidates,
+        key=lambda item: (
+            recommendation_priority.get(
+                item.get("recommendation", "review"),
+                1,
+            ),
+            -float(item.get("overall_score", 0.0) or 0.0),
+            -float(item.get("evaluation_scores", {}).get(
+                "hook_first_3_seconds", 0.0
+            ) or 0.0),
+            str(item.get("episode", "")),
+            str(item.get("candidate_id", "")),
+        ),
+    )
+
+    for position, candidate in enumerate(ranked, start=1):
+        candidate["final_rank"] = position
+
+    rejected = [
+        candidate
+        for candidate in ranked
+        if candidate.get("recommendation") == "reject"
+    ]
+
+    return ranked, rejected
 
 
 # ============================================================
@@ -462,7 +512,7 @@ def run(
     max_candidates_per_episode: int = 5,
     shortlist_size: int = 30,
 ) -> dict:
-    """Execute episode discovery and boundary optimization."""
+    """Execute discovery, optimization, evaluation and ranking."""
 
     stats = {
         "episodes_loaded": 0,
@@ -475,6 +525,7 @@ def run(
         "failed_calls": 0,
         "cache_hits": 0,
         "llm_enabled": False,
+
         "boundary_candidates_received": 0,
         "boundary_candidates_optimized": 0,
         "boundary_candidates_failed": 0,
@@ -482,6 +533,17 @@ def run(
         "boundary_api_calls": 0,
         "boundary_successful_calls": 0,
         "boundary_failed_calls": 0,
+
+        "evaluation_candidates_received": 0,
+        "evaluation_candidates_evaluated": 0,
+        "evaluation_candidates_cached": 0,
+        "evaluation_candidates_failed": 0,
+        "evaluation_api_calls": 0,
+        "evaluation_successful_calls": 0,
+        "evaluation_failed_calls": 0,
+        "evaluation_accepted": 0,
+        "evaluation_review": 0,
+        "evaluation_rejected": 0,
     }
 
     # --------------------------------------------------------
@@ -558,7 +620,6 @@ def run(
         len(candidates),
     )
 
-    # Preserve the original shortlist for comparison and fallback.
     pre_boundary_shortlist = [
         dict(candidate)
         for candidate in shortlist
@@ -574,7 +635,6 @@ def run(
             candidates=shortlist,
         )
 
-    # Ensure source excerpts correspond to the final selected IDs.
     optimized_shortlist = refresh_candidate_source_segments(
         optimized_shortlist,
         episodes,
@@ -586,7 +646,49 @@ def run(
     )
 
     # --------------------------------------------------------
-    # Stage 6: Save outputs
+    # Stage 6: Semantic promo evaluation
+    # --------------------------------------------------------
+
+    with Timer() as evaluation_timer:
+        evaluated_candidates = analyzer.evaluate_promos(
+            episodes=episodes,
+            candidates=optimized_shortlist,
+        )
+
+    logger.info(
+        "Promo evaluation completed in %s.",
+        evaluation_timer,
+    )
+
+    # --------------------------------------------------------
+    # Stage 7: Final ranking and separation
+    # --------------------------------------------------------
+
+    ranked_candidates, rejected_candidates = (
+        rank_evaluated_candidates(evaluated_candidates)
+    )
+
+    accepted_candidates = [
+        candidate
+        for candidate in ranked_candidates
+        if candidate.get("recommendation") == "accept"
+    ]
+
+    review_candidates = [
+        candidate
+        for candidate in ranked_candidates
+        if candidate.get("recommendation") == "review"
+    ]
+
+    logger.info(
+        "Final ranking: %d accepted, %d review, %d rejected.",
+        len(accepted_candidates),
+        len(review_candidates),
+        len(rejected_candidates),
+    )
+
+    # --------------------------------------------------------
+    # Stage 8: Save outputs
     # --------------------------------------------------------
 
     output_root = Path("outputs")
@@ -607,6 +709,22 @@ def run(
         output_root / "candidates" / "shortlist.json"
     )
 
+    ranked_path = (
+        output_root / "ranked_promos" / "ranked_promos.json"
+    )
+
+    accepted_path = (
+        output_root / "ranked_promos" / "accepted_promos.json"
+    )
+
+    review_path = (
+        output_root / "ranked_promos" / "review_promos.json"
+    )
+
+    rejected_path = (
+        output_root / "rejected_candidates" / "rejected_promos.json"
+    )
+
     stats_path = (
         output_root / "reports" / "discovery_stats.json"
     )
@@ -615,6 +733,10 @@ def run(
     write_json(candidates, discovered_path)
     write_json(pre_boundary_shortlist, pre_boundary_path)
     write_json(optimized_shortlist, shortlist_path)
+    write_json(ranked_candidates, ranked_path)
+    write_json(accepted_candidates, accepted_path)
+    write_json(review_candidates, review_path)
+    write_json(rejected_candidates, rejected_path)
 
     save_episode_candidate_files(
         candidates,
@@ -622,43 +744,89 @@ def run(
     )
 
     # --------------------------------------------------------
-    # Stage 7: Collect execution statistics
+    # Stage 9: Collect execution statistics
     # --------------------------------------------------------
 
     analyzer_stats = analyzer.stats
 
     stats.update({
-        "episodes_analyzed": analyzer_stats["episodes_analyzed"],
-        "episodes_failed": analyzer_stats["episodes_failed"],
+        "episodes_analyzed": analyzer_stats.get(
+            "episodes_analyzed", 0
+        ),
+        "episodes_failed": analyzer_stats.get(
+            "episodes_failed", 0
+        ),
         "total_discovered_candidates": len(candidates),
         "shortlisted_candidates": len(pre_boundary_shortlist),
-        "api_calls": analyzer_stats["api_calls"],
-        "successful_calls": analyzer_stats["successful_calls"],
-        "failed_calls": analyzer_stats["failed_calls"],
-        "cache_hits": analyzer_stats["episodes_cached"],
+
+        "api_calls": analyzer_stats.get("api_calls", 0),
+        "successful_calls": analyzer_stats.get(
+            "successful_calls", 0
+        ),
+        "failed_calls": analyzer_stats.get("failed_calls", 0),
+        "cache_hits": analyzer_stats.get("episodes_cached", 0),
+
+        "boundary_candidates_received": analyzer_stats.get(
+            "boundary_candidates_received", 0
+        ),
+        "boundary_candidates_optimized": analyzer_stats.get(
+            "boundary_candidates_optimized", 0
+        ),
+        "boundary_candidates_failed": analyzer_stats.get(
+            "boundary_candidates_failed", 0
+        ),
+        "boundary_candidates_cached": analyzer_stats.get(
+            "boundary_candidates_cached", 0
+        ),
+        "boundary_api_calls": analyzer_stats.get(
+            "boundary_api_calls", 0
+        ),
+        "boundary_successful_calls": analyzer_stats.get(
+            "boundary_successful_calls", 0
+        ),
+        "boundary_failed_calls": analyzer_stats.get(
+            "boundary_failed_calls", 0
+        ),
+
+        "evaluation_candidates_received": analyzer_stats.get(
+            "evaluation_candidates_received", 0
+        ),
+        "evaluation_candidates_evaluated": analyzer_stats.get(
+            "evaluation_candidates_evaluated", 0
+        ),
+        "evaluation_candidates_cached": analyzer_stats.get(
+            "evaluation_candidates_cached", 0
+        ),
+        "evaluation_candidates_failed": analyzer_stats.get(
+            "evaluation_candidates_failed", 0
+        ),
+        "evaluation_api_calls": analyzer_stats.get(
+            "evaluation_api_calls", 0
+        ),
+        "evaluation_successful_calls": analyzer_stats.get(
+            "evaluation_successful_calls", 0
+        ),
+        "evaluation_failed_calls": analyzer_stats.get(
+            "evaluation_failed_calls", 0
+        ),
+        "evaluation_accepted": analyzer_stats.get(
+            "evaluation_accepted", 0
+        ),
+        "evaluation_review": analyzer_stats.get(
+            "evaluation_review", 0
+        ),
+        "evaluation_rejected": analyzer_stats.get(
+            "evaluation_rejected", 0
+        ),
+
+        "accepted_promos": len(accepted_candidates),
+        "review_promos": len(review_candidates),
+        "rejected_promos": len(rejected_candidates),
+
         "analysis_runtime": str(analysis_timer),
         "boundary_runtime": str(boundary_timer),
-        "boundary_candidates_received": (
-            analyzer_stats["boundary_candidates_received"]
-        ),
-        "boundary_candidates_optimized": (
-            analyzer_stats["boundary_candidates_optimized"]
-        ),
-        "boundary_candidates_failed": (
-            analyzer_stats["boundary_candidates_failed"]
-        ),
-        "boundary_candidates_cached": (
-            analyzer_stats["boundary_candidates_cached"]
-        ),
-        "boundary_api_calls": (
-            analyzer_stats["boundary_api_calls"]
-        ),
-        "boundary_successful_calls": (
-            analyzer_stats["boundary_successful_calls"]
-        ),
-        "boundary_failed_calls": (
-            analyzer_stats["boundary_failed_calls"]
-        ),
+        "evaluation_runtime": str(evaluation_timer),
+        "preparation_runtime": str(preparation_timer),
     })
 
     write_json(stats, stats_path)
@@ -667,6 +835,10 @@ def run(
     logger.info("Discovered candidates: %s", discovered_path)
     logger.info("Pre-boundary shortlist: %s", pre_boundary_path)
     logger.info("Optimized shortlist: %s", shortlist_path)
+    logger.info("Final ranking: %s", ranked_path)
+    logger.info("Accepted promos: %s", accepted_path)
+    logger.info("Review promos: %s", review_path)
+    logger.info("Rejected promos: %s", rejected_path)
     logger.info("Statistics: %s", stats_path)
 
     return stats
@@ -723,31 +895,39 @@ def main() -> None:
             sys.exit(1)
 
     print("\n" + "=" * 60)
-    print("  PROMOFINDER AI: DISCOVERY COMPLETE")
+    print("  PROMOFINDER AI: PIPELINE COMPLETE")
     print("=" * 60)
     print(f"  Runtime                 : {total_timer}")
     print(f"  Episodes loaded         : {stats['episodes_loaded']}")
     print(f"  Episodes analyzed       : {stats['episodes_analyzed']}")
     print(f"  Episodes failed         : {stats['episodes_failed']}")
     print(f"  Episode API calls       : {stats['api_calls']}")
-    print(f"  Successful calls        : {stats['successful_calls']}")
-    print(f"  Failed calls            : {stats['failed_calls']}")
     print(f"  Episode cache hits      : {stats['cache_hits']}")
     print(f"  Candidates discovered   : {stats['total_discovered_candidates']}")
     print(f"  Candidates shortlisted  : {stats['shortlisted_candidates']}")
     print("-" * 60)
-    print(f"  Boundary candidates     : {stats['boundary_candidates_received']}")
-    print(f"  Boundaries optimized    : {stats['boundary_candidates_optimized']}")
+    print(f"  Boundary optimized      : {stats['boundary_candidates_optimized']}")
     print(f"  Boundary failures       : {stats['boundary_candidates_failed']}")
-    print(f"  Boundary cache hits     : {stats['boundary_candidates_cached']}")
-    print(f"  Boundary API calls      : {stats['boundary_api_calls']}")
-    print(f"  Boundary API failures   : {stats['boundary_failed_calls']}")
+    print(f"  Boundary API calls     : {stats['boundary_api_calls']}")
+    print("-" * 60)
+    print(f"  Evaluation candidates   : {stats['evaluation_candidates_received']}")
+    print(f"  Evaluation successes    : {stats['evaluation_candidates_evaluated']}")
+    print(f"  Evaluation failures     : {stats['evaluation_candidates_failed']}")
+    print(f"  Evaluation API calls    : {stats['evaluation_api_calls']}")
+    print(f"  Evaluation cache hits   : {stats['evaluation_candidates_cached']}")
+    print("-" * 60)
+    print(f"  Accepted promos         : {stats['accepted_promos']}")
+    print(f"  Needs human review      : {stats['review_promos']}")
+    print(f"  Rejected promos         : {stats['rejected_promos']}")
     print("=" * 60)
     print("  Outputs:")
-    print("  outputs/episode_analysis/episode_analysis.json")
     print("  outputs/candidates/discovered_candidates.json")
     print("  outputs/candidates/shortlist_pre_boundary.json")
     print("  outputs/candidates/shortlist.json")
+    print("  outputs/ranked_promos/ranked_promos.json")
+    print("  outputs/ranked_promos/accepted_promos.json")
+    print("  outputs/ranked_promos/review_promos.json")
+    print("  outputs/rejected_candidates/rejected_promos.json")
     print("  outputs/reports/discovery_stats.json")
     print("=" * 60 + "\n")
 

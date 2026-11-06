@@ -1083,4 +1083,498 @@ def validate_boundary_optimization_response(
     }
 
 
+# ============================================================
+# FINAL PROMO EVALUATION
+# ============================================================
 
+_PROMO_EVALUATION_TEMPLATE = """\
+You are an expert short-form drama promotional editor.
+
+Your task is to evaluate whether a proposed screenplay excerpt would
+work as an effective promotional video for a microdrama.
+
+Evaluate the actual content of the supplied excerpt. Do not assume
+that a candidate is good merely because it was discovered by an
+earlier stage of the pipeline.
+
+IMPORTANT RULES:
+- Evaluate only what is supported by the supplied screenplay.
+- Do not invent dialogue, actions, motivations or consequences.
+- Do not reward dramatic language without meaningful narrative impact.
+- Do not assume that a new viewer knows the characters or story.
+- A visually compelling moment can be effective even without dialogue.
+- Distinguish visual evidence from dialogue and sound evidence.
+- Do not assume that music, captions, editing or external footage
+  will improve the clip. The assignment evaluates the source moments.
+- Be critical. Weak candidates should receive low scores.
+- Every assessment must cite exact source segment IDs.
+
+## Episode and candidate
+
+Episode: {episode_name}
+
+Candidate ID: {candidate_id}
+
+Clip start: {start_timestamp}
+Clip end: {end_timestamp}
+Clip duration: {duration_seconds} seconds
+
+Original candidate context:
+
+Hook:
+{hook}
+
+Cliffhanger:
+{cliffhanger}
+
+Standalone clarity:
+{standalone_clarity}
+
+Narrative context:
+{narrative_context}
+
+Promotional strength:
+{promotional_strength}
+
+## Complete optimized screenplay excerpt
+
+The source segments below are in chronological order.
+Their IDs and timestamps are authoritative.
+
+{screenplay}
+
+## Evaluation dimensions
+
+Score each dimension from 0.0 to 1.0.
+
+### 1. Hook within the first 3 seconds
+
+Evaluate ONLY what happens within the first three seconds of the clip.
+
+Consider:
+- Does something immediately create curiosity, tension, surprise
+  or an emotional reaction?
+- Is there a compelling visual or narrative development?
+- Would someone scrolling through social media have a reason
+  to stop?
+
+A dramatic event occurring later in the clip must not improve
+this score.
+
+### 2. Cliffhanger and ending strength
+
+Evaluate the ending of the complete excerpt.
+
+Consider:
+- Does the clip end at a compelling unresolved moment?
+- Is there a question, threat, revelation or emotional uncertainty?
+- Would a viewer want to know what happens next?
+
+A clip that simply ends after completing an event should not
+automatically receive a high score.
+
+### 3. Standalone clarity
+
+Evaluate whether someone who has never watched the show can
+understand the essential situation.
+
+Consider:
+- Are the important people and their immediate situation
+  understandable?
+- Is there enough context to understand the conflict or event?
+- Does the clip depend too heavily on knowledge from earlier episodes?
+
+Do not require the viewer to understand the entire story.
+
+### 4. Emotional impact
+
+Evaluate the emotional strength of the complete excerpt.
+
+Consider:
+- Does the moment create a meaningful emotional response?
+- Are the stakes, conflict or character reactions compelling?
+- Does the emotional progression feel earned and understandable?
+
+Do not confuse shouting, insults or emotional vocabulary with
+genuine emotional impact.
+
+### 5. Overall promotional suitability
+
+Evaluate whether the excerpt would make an effective short-form
+advertisement for the show.
+
+Consider:
+- Is there a compelling narrative progression?
+- Does the excerpt create interest in the wider story?
+- Are its opening, progression and ending effective together?
+- Is the content distinctive and engaging enough to promote?
+
+Consider all five dimensions, not just dramatic intensity.
+
+## Evidence requirements
+
+For every dimension:
+- Provide a concise explanation.
+- Provide one or more exact source segment IDs supporting the score.
+- Cite only segments that actually support the assessment.
+- Do not invent segment IDs.
+- The hook evidence must come from segments overlapping the
+  first three seconds of the clip.
+
+Be honest about weaknesses. Do not inflate scores to be encouraging.
+
+## Required output
+
+Return ONLY valid JSON. Do not include markdown fences.
+
+Use this exact schema:
+
+{{
+  "candidate_id": "{candidate_id}",
+  "assessments": {{
+    "hook_first_3_seconds": {{
+      "score": <float from 0.0 to 1.0>,
+      "reasoning": "<concise explanation>",
+      "evidence_segment_ids": ["<exact source segment ID>"]
+    }},
+    "cliffhanger": {{
+      "score": <float from 0.0 to 1.0>,
+      "reasoning": "<concise explanation>",
+      "evidence_segment_ids": ["<exact source segment ID>"]
+    }},
+    "standalone_clarity": {{
+      "score": <float from 0.0 to 1.0>,
+      "reasoning": "<concise explanation>",
+      "evidence_segment_ids": ["<exact source segment ID>"]
+    }},
+    "emotional_impact": {{
+      "score": <float from 0.0 to 1.0>,
+      "reasoning": "<concise explanation>",
+      "evidence_segment_ids": ["<exact source segment ID>"]
+    }},
+    "promo_suitability": {{
+      "score": <float from 0.0 to 1.0>,
+      "reasoning": "<concise explanation>",
+      "evidence_segment_ids": ["<exact source segment ID>"]
+    }}
+  }},
+  "major_weakness": "<most important weakness, or empty string if none>"
+}}
+
+Do not calculate an overall score or make an accept/reject decision.
+Python will calculate those consistently.
+"""
+
+
+_PROMO_EVALUATION_WEIGHTS = {
+    "hook_first_3_seconds": 0.20,
+    "cliffhanger": 0.25,
+    "standalone_clarity": 0.20,
+    "emotional_impact": 0.15,
+    "promo_suitability": 0.20,
+}
+
+
+def build_promo_evaluation_prompt(
+    episode: dict,
+    candidate: dict,
+) -> str:
+    """
+    Build the final promotional quality evaluation prompt.
+
+    The LLM evaluates an already optimized candidate using its
+    complete original screenplay excerpt.
+
+    No new boundaries or timestamps are generated here.
+    """
+
+    if not isinstance(candidate, dict):
+        raise ValueError("Candidate must be a dictionary.")
+
+    try:
+        source_segments = _get_episode_segments(episode)
+    except ValueError as exc:
+        raise ValueError(
+            "Could not retrieve episode source segments."
+        ) from exc
+
+    segment_map = {}
+
+    for segment in source_segments:
+        segment_id = _get_segment_id(segment)
+
+        if segment_id:
+            segment_map[segment_id] = segment
+
+    segment_ids = candidate.get("segment_ids")
+
+    if not isinstance(segment_ids, list) or not segment_ids:
+        raise ValueError("Candidate has no segment_ids.")
+
+    segment_ids = [str(item) for item in segment_ids]
+
+    if len(set(segment_ids)) != len(segment_ids):
+        raise ValueError("Candidate contains duplicate segment IDs.")
+
+    if any(item not in segment_map for item in segment_ids):
+        raise ValueError("Candidate references unknown source segments.")
+
+    positions = {
+        _get_segment_id(segment): index
+        for index, segment in enumerate(source_segments)
+        if _get_segment_id(segment)
+    }
+
+    selected_positions = [positions[item] for item in segment_ids]
+
+    if selected_positions != list(
+        range(selected_positions[0], selected_positions[-1] + 1)
+    ):
+        raise ValueError("Candidate segments are not contiguous.")
+
+    first_segment = segment_map[segment_ids[0]]
+    last_segment = segment_map[segment_ids[-1]]
+
+    start = float(first_segment["start_seconds"])
+    end = float(last_segment["end_seconds"])
+    duration = end - start
+
+    if not math.isfinite(duration) or not 20.0 <= duration <= 60.0:
+        raise ValueError("Candidate duration must be between 20 and 60 seconds.")
+
+    screenplay_lines = [
+        _format_episode_segment(segment_map[item])
+        for item in segment_ids
+    ]
+
+    episode_name = str(
+        episode.get(
+            "episode",
+            episode.get("episode_number", "UNKNOWN"),
+        )
+    )
+
+    return _PROMO_EVALUATION_TEMPLATE.format(
+        episode_name=episode_name,
+        candidate_id=str(candidate.get("candidate_id", "UNKNOWN")),
+        start_timestamp=seconds_to_timestamp(start),
+        end_timestamp=seconds_to_timestamp(end),
+        duration_seconds=round(duration, 3),
+        hook=str(candidate.get("hook", "Not provided.")),
+        cliffhanger=str(candidate.get("cliffhanger", "Not provided.")),
+        standalone_clarity=str(
+            candidate.get("standalone_clarity", "Not provided.")
+        ),
+        narrative_context=str(
+            candidate.get("narrative_context", "Not provided.")
+        ),
+        promotional_strength=str(
+            candidate.get("promotional_strength", "Not provided.")
+        ),
+        screenplay="\n".join(screenplay_lines),
+    )
+
+
+def validate_promo_evaluation_response(
+    data: dict,
+    candidate: dict,
+    episode: dict,
+) -> dict | None:
+    """
+    Validate the final LLM promotional evaluation.
+
+    Checks:
+    - All five evaluation dimensions exist.
+    - Scores are finite values between 0 and 1.
+    - Each dimension has reasoning and source evidence.
+    - Evidence IDs belong to the optimized candidate.
+    - Hook evidence overlaps the first three seconds.
+    - Candidate boundaries and duration match the original episode.
+
+    Python calculates the weighted score and recommendation.
+
+    Returns a normalized evaluation or None if invalid.
+    """
+
+    if not isinstance(data, dict):
+        return None
+
+    if not isinstance(candidate, dict) or not isinstance(episode, dict):
+        return None
+
+    candidate_id = str(candidate.get("candidate_id", ""))
+
+    if not candidate_id:
+        return None
+
+    if str(data.get("candidate_id", "")) != candidate_id:
+        return None
+
+    assessments = data.get("assessments")
+
+    if not isinstance(assessments, dict):
+        return None
+
+    required_dimensions = tuple(_PROMO_EVALUATION_WEIGHTS.keys())
+
+    if any(
+        dimension not in assessments
+        for dimension in required_dimensions
+    ):
+        return None
+
+    try:
+        source_segments = _get_episode_segments(episode)
+    except ValueError:
+        return None
+
+    segment_map = {}
+    segment_positions = {}
+
+    for position, segment in enumerate(source_segments):
+        segment_id = _get_segment_id(segment)
+
+        if segment_id:
+            segment_map[segment_id] = segment
+            segment_positions[segment_id] = position
+
+    segment_ids = candidate.get("segment_ids")
+
+    if not isinstance(segment_ids, list) or not segment_ids:
+        return None
+
+    segment_ids = [str(item) for item in segment_ids]
+
+    if len(set(segment_ids)) != len(segment_ids):
+        return None
+
+    if any(item not in segment_map for item in segment_ids):
+        return None
+
+    positions = [segment_positions[item] for item in segment_ids]
+
+    if positions != list(range(positions[0], positions[-1] + 1)):
+        return None
+
+    first_segment = segment_map[segment_ids[0]]
+    last_segment = segment_map[segment_ids[-1]]
+
+    try:
+        clip_start = float(first_segment["start_seconds"])
+        clip_end = float(last_segment["end_seconds"])
+    except (KeyError, TypeError, ValueError):
+        return None
+
+    duration = clip_end - clip_start
+
+    if not math.isfinite(duration) or not 20.0 <= duration <= 60.0:
+        return None
+
+    cleaned_assessments = {}
+
+    for dimension in required_dimensions:
+        assessment = assessments[dimension]
+
+        if not isinstance(assessment, dict):
+            return None
+
+        score = assessment.get("score")
+        reasoning = assessment.get("reasoning")
+        evidence_ids = assessment.get("evidence_segment_ids")
+
+        if not _is_valid_score(score):
+            return None
+
+        if not isinstance(reasoning, str) or not reasoning.strip():
+            return None
+
+        if not isinstance(evidence_ids, list) or not evidence_ids:
+            return None
+
+        evidence_ids = [str(item) for item in evidence_ids]
+
+        if len(set(evidence_ids)) != len(evidence_ids):
+            return None
+
+        # Evidence must belong to the actual optimized clip.
+        if any(item not in segment_ids for item in evidence_ids):
+            return None
+
+        # The hook assessment must cite evidence from the first
+        # three seconds, not merely from somewhere in the clip.
+        if dimension == "hook_first_3_seconds":
+            hook_window_end = clip_start + 3.0
+
+            valid_hook_evidence = []
+
+            for evidence_id in evidence_ids:
+                segment = segment_map[evidence_id]
+
+                try:
+                    segment_start = float(segment["start_seconds"])
+                    segment_end = float(segment["end_seconds"])
+                except (KeyError, TypeError, ValueError):
+                    continue
+
+                overlaps_hook_window = (
+                    segment_start < hook_window_end
+                    and segment_end > clip_start
+                )
+
+                if overlaps_hook_window:
+                    valid_hook_evidence.append(evidence_id)
+
+            if not valid_hook_evidence:
+                return None
+
+        cleaned_assessments[dimension] = {
+            "score": float(score),
+            "reasoning": reasoning.strip()[:1000],
+            "evidence_segment_ids": evidence_ids,
+        }
+
+    # Weighted score is calculated in Python, not by the LLM.
+    overall_score = sum(
+        cleaned_assessments[dimension]["score"] * weight
+        for dimension, weight in _PROMO_EVALUATION_WEIGHTS.items()
+    )
+
+    # Recommendation thresholds are deliberately conservative.
+    # A high average cannot compensate for a fundamentally weak
+    # hook, cliffhanger or standalone clarity.
+    hook_score = cleaned_assessments["hook_first_3_seconds"]["score"]
+    cliffhanger_score = cleaned_assessments["cliffhanger"]["score"]
+    clarity_score = cleaned_assessments["standalone_clarity"]["score"]
+
+    if (
+        overall_score >= 0.72
+        and hook_score >= 0.50
+        and cliffhanger_score >= 0.50
+        and clarity_score >= 0.50
+    ):
+        recommendation = "accept"
+
+    elif overall_score >= 0.50:
+        recommendation = "review"
+
+    else:
+        recommendation = "reject"
+
+    major_weakness = data.get("major_weakness", "")
+
+    if not isinstance(major_weakness, str):
+        major_weakness = ""
+
+    return {
+        "candidate_id": candidate_id,
+        "dimension_scores": {
+            dimension: assessment["score"]
+            for dimension, assessment in cleaned_assessments.items()
+        },
+        "assessments": cleaned_assessments,
+        "overall_score": round(overall_score, 4),
+        "recommendation": recommendation,
+        "major_weakness": major_weakness.strip()[:1000],
+        "evaluation_weights": dict(_PROMO_EVALUATION_WEIGHTS),
+        "duration_seconds": round(duration, 3),
+    }
