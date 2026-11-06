@@ -1,0 +1,756 @@
+
+#!/usr/bin/env python3
+"""
+main.py - PromoFinder AI
+========================
+
+Episode-level promotional moment discovery pipeline.
+
+Implemented stages:
+1. Load and validate parsed screenplay episodes.
+2. Analyze each complete episode once using the LLM.
+3. Carry a running story summary between episodes.
+4. Discover candidate promotional moments with source segment IDs.
+5. Validate candidate timestamps, duration and source continuity.
+6. Calculate generic structural signals.
+7. Pre-rank candidates while preserving episode diversity.
+8. Optimize shortlisted candidate boundaries using a separate LLM stage.
+9. Save discovery and boundary optimization outputs.
+
+Final semantic promo evaluation and ranking will follow.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+import sys
+from collections import defaultdict
+from pathlib import Path
+from typing import Any
+
+# Load environment variables before importing the LLM client.
+try:
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=Path(".env"), override=False)
+except ImportError:
+    pass
+
+from src.config import load_config, apply_overrides
+from src.utils import setup_logging, print_banner, Timer
+from src.ingestion.episode_loader import load_episodes
+from src.llm.semantic_analyzer import SemanticAnalyzer
+
+logger = logging.getLogger(__name__)
+
+
+# ============================================================
+# CLI
+# ============================================================
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="main.py",
+        description="PromoFinder AI: Drama promotional moment discovery",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    parser.add_argument(
+        "--config",
+        default="config/config.yaml",
+        help="Configuration file.",
+    )
+
+    parser.add_argument(
+        "--input",
+        default="data/processed/",
+        help="Directory containing parsed episode JSON files.",
+    )
+
+    parser.add_argument(
+        "--no-llm",
+        action="store_true",
+        help="Disable LLM analysis.",
+    )
+
+    parser.add_argument(
+        "--max-candidates-per-episode",
+        type=int,
+        default=5,
+        help="Maximum candidate moments requested per episode.",
+    )
+
+    parser.add_argument(
+        "--shortlist-size",
+        type=int,
+        default=30,
+        help="Number of candidates retained for later AI evaluation.",
+    )
+
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Enable debug logging.",
+    )
+
+    return parser
+
+
+# ============================================================
+# GENERIC STRUCTURAL ANALYSIS
+# ============================================================
+
+def calculate_structural_signals(
+    candidate: dict,
+    source_segments: list[dict],
+) -> dict:
+    """
+    Calculate show-agnostic structural signals.
+
+    These signals support pre-ranking. They do not attempt to
+    understand emotions, betrayal, suspense or narrative meaning.
+    """
+
+    selected_ids = set(candidate.get("segment_ids", []))
+
+    segments = [
+        segment
+        for segment in source_segments
+        if str(segment.get("segment_id")) in selected_ids
+    ]
+
+    if not segments:
+        return {
+            "dialogue_share": 0.0,
+            "speaker_diversity": 0.0,
+            "scene_diversity": 0.0,
+            "kind_transition_ratio": 0.0,
+            "segment_density": 0.0,
+            "structural_score": 0.0,
+        }
+
+    segments.sort(key=lambda item: item["start_seconds"])
+
+    total = len(segments)
+
+    dialogue_segments = [
+        segment for segment in segments
+        if segment.get("kind") == "dialogue"
+    ]
+
+    speakers = {
+        str(segment.get("speaker")).strip().lower()
+        for segment in dialogue_segments
+        if segment.get("speaker")
+    }
+
+    scenes = {
+        segment.get("scene_number")
+        for segment in segments
+        if segment.get("scene_number") is not None
+    }
+
+    kinds = [
+        segment.get("kind", "unknown")
+        for segment in segments
+    ]
+
+    transitions = sum(
+        1
+        for index in range(1, len(kinds))
+        if kinds[index] != kinds[index - 1]
+    )
+
+    dialogue_share = len(dialogue_segments) / total
+    speaker_diversity = min(len(speakers) / 4.0, 1.0)
+    scene_diversity = min(len(scenes) / 3.0, 1.0)
+
+    transition_ratio = (
+        transitions / (total - 1)
+        if total > 1 else 0.0
+    )
+
+    duration = max(
+        float(candidate.get("duration_seconds", 0.0)),
+        1.0,
+    )
+
+    segment_density = min(total / duration, 1.0)
+
+    structural_score = (
+        0.25 * dialogue_share
+        + 0.25 * speaker_diversity
+        + 0.15 * scene_diversity
+        + 0.20 * transition_ratio
+        + 0.15 * segment_density
+    )
+
+    return {
+        "dialogue_share": round(dialogue_share, 4),
+        "speaker_diversity": round(speaker_diversity, 4),
+        "scene_diversity": round(scene_diversity, 4),
+        "kind_transition_ratio": round(transition_ratio, 4),
+        "segment_density": round(segment_density, 4),
+        "structural_score": round(structural_score, 4),
+    }
+
+
+# ============================================================
+# CANDIDATE PREPARATION
+# ============================================================
+
+def prepare_discovered_candidates(
+    episodes: list[dict],
+    episode_analyses: list[dict],
+) -> list[dict]:
+    """Attach source segments and structural signals to candidates."""
+
+    episode_map = {
+        str(episode.get("episode")): episode
+        for episode in episodes
+    }
+
+    prepared = []
+
+    for analysis in episode_analyses:
+        episode_name = str(analysis.get("episode", ""))
+
+        if analysis.get("analysis_status") != "success":
+            continue
+
+        source_episode = episode_map.get(episode_name)
+
+        if source_episode is None:
+            logger.warning(
+                "Could not match analysis to source episode: %s",
+                episode_name,
+            )
+            continue
+
+        source_segments = source_episode.get("segments", [])
+
+        segment_map = {
+            str(segment.get("segment_id")): segment
+            for segment in source_segments
+            if segment.get("segment_id") is not None
+        }
+
+        for candidate in analysis.get("candidate_moments", []):
+            segment_ids = candidate.get("segment_ids", [])
+
+            source_excerpt = [
+                segment_map[segment_id]
+                for segment_id in segment_ids
+                if segment_id in segment_map
+            ]
+
+            if len(source_excerpt) != len(segment_ids):
+                logger.warning(
+                    "Candidate %s has missing source segments. Skipping.",
+                    candidate.get("candidate_id"),
+                )
+                continue
+
+            structural = calculate_structural_signals(
+                candidate,
+                source_segments,
+            )
+
+            prepared_candidate = dict(candidate)
+
+            prepared_candidate["episode"] = episode_name
+            prepared_candidate["logline"] = source_episode.get("logline", "")
+            prepared_candidate["source_file"] = source_episode.get("source_file")
+            prepared_candidate["source_segments"] = source_excerpt
+            prepared_candidate["structural_signals"] = structural
+
+            confidence = float(
+                candidate.get("candidate_confidence", 0.0)
+            )
+
+            structural_score = structural["structural_score"]
+
+            prepared_candidate["preliminary_score"] = round(
+                0.30 * confidence + 0.70 * structural_score,
+                4,
+            )
+
+            prepared.append(prepared_candidate)
+
+    return prepared
+
+
+# ============================================================
+# DIVERSITY-AWARE SHORTLIST
+# ============================================================
+
+def select_shortlist(
+    candidates: list[dict],
+    shortlist_size: int,
+    max_per_episode_first_pass: int = 2,
+) -> list[dict]:
+    """Select a preliminary shortlist with episode diversity."""
+
+    if shortlist_size <= 0:
+        return []
+
+    ordered = sorted(
+        candidates,
+        key=lambda item: (
+            -item.get("preliminary_score", 0.0),
+            str(item.get("episode", "")),
+            str(item.get("candidate_id", "")),
+        ),
+    )
+
+    selected = []
+    selected_ids = set()
+    episode_counts = defaultdict(int)
+
+    for candidate in ordered:
+        if len(selected) >= shortlist_size:
+            break
+
+        episode = str(candidate.get("episode", "UNKNOWN"))
+        identity = (
+            episode,
+            str(candidate.get("candidate_id", "")),
+        )
+
+        if episode_counts[episode] >= max_per_episode_first_pass:
+            continue
+
+        selected.append(candidate)
+        selected_ids.add(identity)
+        episode_counts[episode] += 1
+
+    if len(selected) < shortlist_size:
+        for candidate in ordered:
+            if len(selected) >= shortlist_size:
+                break
+
+            identity = (
+                str(candidate.get("episode", "UNKNOWN")),
+                str(candidate.get("candidate_id", "")),
+            )
+
+            if identity in selected_ids:
+                continue
+
+            selected.append(candidate)
+            selected_ids.add(identity)
+
+    return selected
+
+
+# ============================================================
+# BOUNDARY RESULT PREPARATION
+# ============================================================
+
+def refresh_candidate_source_segments(
+    candidates: list[dict],
+    episodes: list[dict],
+) -> list[dict]:
+    """
+    Refresh source_segments after boundary optimization.
+
+    Only the segment IDs selected by the final boundary decision
+    are included. Original boundaries remain unchanged on failure.
+    """
+
+    episode_map = {
+        str(episode.get("episode")): episode
+        for episode in episodes
+    }
+
+    refreshed = []
+
+    for candidate in candidates:
+        result = dict(candidate)
+
+        episode_name = str(result.get("episode", ""))
+        episode = episode_map.get(episode_name)
+
+        if episode is None:
+            refreshed.append(result)
+            continue
+
+        segment_map = {
+            str(segment.get("segment_id")): segment
+            for segment in episode.get("segments", [])
+            if segment.get("segment_id") is not None
+        }
+
+        segment_ids = result.get("segment_ids", [])
+
+        source_excerpt = [
+            segment_map[segment_id]
+            for segment_id in segment_ids
+            if segment_id in segment_map
+        ]
+
+        if len(source_excerpt) != len(segment_ids):
+            logger.warning(
+                "Candidate %s has missing segments after boundary "
+                "optimization. Keeping its existing source excerpt.",
+                result.get("candidate_id"),
+            )
+        else:
+            result["source_segments"] = source_excerpt
+
+        refreshed.append(result)
+
+    return refreshed
+
+
+# ============================================================
+# OUTPUT HELPERS
+# ============================================================
+
+def write_json(data: Any, path: str | Path) -> None:
+    """Write JSON atomically."""
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    temporary_path = path.with_suffix(path.suffix + ".tmp")
+
+    with temporary_path.open("w", encoding="utf-8") as file:
+        json.dump(
+            data,
+            file,
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    temporary_path.replace(path)
+
+
+def save_episode_candidate_files(
+    candidates: list[dict],
+    output_dir: str | Path,
+) -> None:
+    """Save discovered candidates grouped by episode."""
+
+    grouped = defaultdict(list)
+
+    for candidate in candidates:
+        episode = str(candidate.get("episode", "UNKNOWN"))
+        grouped[episode].append(candidate)
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    for episode, items in grouped.items():
+        safe_name = episode.lower().replace(" ", "_")
+
+        write_json(
+            items,
+            output_dir / f"{safe_name}_discovered_candidates.json",
+        )
+
+
+# ============================================================
+# MAIN PIPELINE
+# ============================================================
+
+def run(
+    cfg,
+    input_dir: str,
+    max_candidates_per_episode: int = 5,
+    shortlist_size: int = 30,
+) -> dict:
+    """Execute episode discovery and boundary optimization."""
+
+    stats = {
+        "episodes_loaded": 0,
+        "episodes_analyzed": 0,
+        "episodes_failed": 0,
+        "total_discovered_candidates": 0,
+        "shortlisted_candidates": 0,
+        "api_calls": 0,
+        "successful_calls": 0,
+        "failed_calls": 0,
+        "cache_hits": 0,
+        "llm_enabled": False,
+        "boundary_candidates_received": 0,
+        "boundary_candidates_optimized": 0,
+        "boundary_candidates_failed": 0,
+        "boundary_candidates_cached": 0,
+        "boundary_api_calls": 0,
+        "boundary_successful_calls": 0,
+        "boundary_failed_calls": 0,
+    }
+
+    # --------------------------------------------------------
+    # Stage 1: Load episodes
+    # --------------------------------------------------------
+
+    with Timer() as load_timer:
+        episodes = load_episodes(input_dir)
+
+    stats["episodes_loaded"] = len(episodes)
+
+    logger.info(
+        "Loaded %d episodes in %s.",
+        len(episodes),
+        load_timer,
+    )
+
+    if not episodes:
+        raise ValueError("No valid episodes were loaded.")
+
+    # --------------------------------------------------------
+    # Stage 2: Episode-level LLM analysis
+    # --------------------------------------------------------
+
+    analyzer = SemanticAnalyzer(cfg)
+    stats["llm_enabled"] = analyzer.is_available
+
+    if not analyzer.is_available:
+        raise RuntimeError(
+            "Episode-level discovery requires an available LLM. "
+            "Check llm_enabled and your API key. Use --no-llm only "
+            "for configuration or parser checks, not discovery."
+        )
+
+    with Timer() as analysis_timer:
+        episode_analyses = analyzer.analyze_episodes(
+            episodes,
+            max_candidates_per_episode=max_candidates_per_episode,
+        )
+
+    logger.info(
+        "Episode-level analysis completed in %s.",
+        analysis_timer,
+    )
+
+    # --------------------------------------------------------
+    # Stage 3: Prepare discovered candidates
+    # --------------------------------------------------------
+
+    with Timer() as preparation_timer:
+        candidates = prepare_discovered_candidates(
+            episodes,
+            episode_analyses,
+        )
+
+    logger.info(
+        "Prepared %d candidates in %s.",
+        len(candidates),
+        preparation_timer,
+    )
+
+    # --------------------------------------------------------
+    # Stage 4: Generic structural pre-ranking
+    # --------------------------------------------------------
+
+    shortlist = select_shortlist(
+        candidates,
+        shortlist_size=shortlist_size,
+    )
+
+    logger.info(
+        "Shortlist selected: %d / %d discovered candidates.",
+        len(shortlist),
+        len(candidates),
+    )
+
+    # Preserve the original shortlist for comparison and fallback.
+    pre_boundary_shortlist = [
+        dict(candidate)
+        for candidate in shortlist
+    ]
+
+    # --------------------------------------------------------
+    # Stage 5: AI-assisted boundary optimization
+    # --------------------------------------------------------
+
+    with Timer() as boundary_timer:
+        optimized_shortlist = analyzer.optimize_boundaries(
+            episodes=episodes,
+            candidates=shortlist,
+        )
+
+    # Ensure source excerpts correspond to the final selected IDs.
+    optimized_shortlist = refresh_candidate_source_segments(
+        optimized_shortlist,
+        episodes,
+    )
+
+    logger.info(
+        "Boundary optimization completed in %s.",
+        boundary_timer,
+    )
+
+    # --------------------------------------------------------
+    # Stage 6: Save outputs
+    # --------------------------------------------------------
+
+    output_root = Path("outputs")
+
+    analysis_path = (
+        output_root / "episode_analysis" / "episode_analysis.json"
+    )
+
+    discovered_path = (
+        output_root / "candidates" / "discovered_candidates.json"
+    )
+
+    pre_boundary_path = (
+        output_root / "candidates" / "shortlist_pre_boundary.json"
+    )
+
+    shortlist_path = (
+        output_root / "candidates" / "shortlist.json"
+    )
+
+    stats_path = (
+        output_root / "reports" / "discovery_stats.json"
+    )
+
+    write_json(episode_analyses, analysis_path)
+    write_json(candidates, discovered_path)
+    write_json(pre_boundary_shortlist, pre_boundary_path)
+    write_json(optimized_shortlist, shortlist_path)
+
+    save_episode_candidate_files(
+        candidates,
+        output_root / "candidates" / "by_episode",
+    )
+
+    # --------------------------------------------------------
+    # Stage 7: Collect execution statistics
+    # --------------------------------------------------------
+
+    analyzer_stats = analyzer.stats
+
+    stats.update({
+        "episodes_analyzed": analyzer_stats["episodes_analyzed"],
+        "episodes_failed": analyzer_stats["episodes_failed"],
+        "total_discovered_candidates": len(candidates),
+        "shortlisted_candidates": len(pre_boundary_shortlist),
+        "api_calls": analyzer_stats["api_calls"],
+        "successful_calls": analyzer_stats["successful_calls"],
+        "failed_calls": analyzer_stats["failed_calls"],
+        "cache_hits": analyzer_stats["episodes_cached"],
+        "analysis_runtime": str(analysis_timer),
+        "boundary_runtime": str(boundary_timer),
+        "boundary_candidates_received": (
+            analyzer_stats["boundary_candidates_received"]
+        ),
+        "boundary_candidates_optimized": (
+            analyzer_stats["boundary_candidates_optimized"]
+        ),
+        "boundary_candidates_failed": (
+            analyzer_stats["boundary_candidates_failed"]
+        ),
+        "boundary_candidates_cached": (
+            analyzer_stats["boundary_candidates_cached"]
+        ),
+        "boundary_api_calls": (
+            analyzer_stats["boundary_api_calls"]
+        ),
+        "boundary_successful_calls": (
+            analyzer_stats["boundary_successful_calls"]
+        ),
+        "boundary_failed_calls": (
+            analyzer_stats["boundary_failed_calls"]
+        ),
+    })
+
+    write_json(stats, stats_path)
+
+    logger.info("Episode analyses: %s", analysis_path)
+    logger.info("Discovered candidates: %s", discovered_path)
+    logger.info("Pre-boundary shortlist: %s", pre_boundary_path)
+    logger.info("Optimized shortlist: %s", shortlist_path)
+    logger.info("Statistics: %s", stats_path)
+
+    return stats
+
+
+# ============================================================
+# ENTRY POINT
+# ============================================================
+
+def main() -> None:
+    parser = _build_parser()
+    args = parser.parse_args()
+
+    if args.max_candidates_per_episode < 1:
+        parser.error("--max-candidates-per-episode must be at least 1.")
+
+    if args.shortlist_size < 1:
+        parser.error("--shortlist-size must be at least 1.")
+
+    setup_logging(verbose=args.verbose)
+    print_banner()
+
+    try:
+        cfg = load_config(args.config)
+
+    except (FileNotFoundError, ValueError) as exc:
+        logger.error("Configuration error: %s", exc)
+        sys.exit(1)
+
+    apply_overrides(
+        cfg,
+        {
+            "llm_enabled": False if args.no_llm else None,
+        },
+    )
+
+    logger.info(
+        "PromoFinder AI starting: input=%s, llm_enabled=%s",
+        args.input,
+        cfg.llm_enabled,
+    )
+
+    with Timer() as total_timer:
+        try:
+            stats = run(
+                cfg=cfg,
+                input_dir=args.input,
+                max_candidates_per_episode=args.max_candidates_per_episode,
+                shortlist_size=args.shortlist_size,
+            )
+
+        except Exception as exc:
+            logger.exception("Pipeline failed: %s", exc)
+            sys.exit(1)
+
+    print("\n" + "=" * 60)
+    print("  PROMOFINDER AI: DISCOVERY COMPLETE")
+    print("=" * 60)
+    print(f"  Runtime                 : {total_timer}")
+    print(f"  Episodes loaded         : {stats['episodes_loaded']}")
+    print(f"  Episodes analyzed       : {stats['episodes_analyzed']}")
+    print(f"  Episodes failed         : {stats['episodes_failed']}")
+    print(f"  Episode API calls       : {stats['api_calls']}")
+    print(f"  Successful calls        : {stats['successful_calls']}")
+    print(f"  Failed calls            : {stats['failed_calls']}")
+    print(f"  Episode cache hits      : {stats['cache_hits']}")
+    print(f"  Candidates discovered   : {stats['total_discovered_candidates']}")
+    print(f"  Candidates shortlisted  : {stats['shortlisted_candidates']}")
+    print("-" * 60)
+    print(f"  Boundary candidates     : {stats['boundary_candidates_received']}")
+    print(f"  Boundaries optimized    : {stats['boundary_candidates_optimized']}")
+    print(f"  Boundary failures       : {stats['boundary_candidates_failed']}")
+    print(f"  Boundary cache hits     : {stats['boundary_candidates_cached']}")
+    print(f"  Boundary API calls      : {stats['boundary_api_calls']}")
+    print(f"  Boundary API failures   : {stats['boundary_failed_calls']}")
+    print("=" * 60)
+    print("  Outputs:")
+    print("  outputs/episode_analysis/episode_analysis.json")
+    print("  outputs/candidates/discovered_candidates.json")
+    print("  outputs/candidates/shortlist_pre_boundary.json")
+    print("  outputs/candidates/shortlist.json")
+    print("  outputs/reports/discovery_stats.json")
+    print("=" * 60 + "\n")
+
+
+if __name__ == "__main__":
+    main()

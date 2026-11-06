@@ -1,0 +1,87 @@
+# ============================================================
+# Kuku FM Audio Drama Promo Recommendation System
+# Configuration File: config/config.yaml
+# ============================================================
+
+pipeline:
+  top_k: 10
+  llm_enabled: true
+  random_seed: 42
+
+# ---- Candidate Window Generation -------------------------
+candidate_generation:
+  window_step_seconds: 5
+  window_durations: [15, 25, 35, 50, 65, 80]
+  min_duration_seconds: 25.0
+  max_duration_seconds: 60.0
+  min_dialogue_segments: 3
+  include_scene_aligned_windows: true
+  include_scene_pair_windows: true
+
+# ---- LLM Configuration -----------------------------------
+#
+# Each stage inherits shared defaults unless overridden.
+# Provider options: google, openai
+# API keys belong in .env, never here.
+#
+# Model identifier is retained from the previous config.
+# Its availability has NOT yet been verified.
+
+llm:
+  defaults:
+    provider: "google"
+    model: "gemini-3.8-flash"
+    temperature: 0.1
+    max_output_tokens: 512
+    timeout_seconds: 30
+    max_retries: 3
+    retry_delay_seconds: 2.0
+
+  # Stage 1: Full episode understanding and candidate discovery
+  episode_analysis:
+    llm_score_threshold: 0.25
+
+  # Stage 2: Candidate start/end boundary optimization
+  boundary_optimization: {}
+
+  # Stage 3: Promo quality evaluation and final scoring
+  promo_evaluation: {}
+
+# ---- Feature Weights -------------------------------------
+feature_weights:
+  # Deterministic features
+  emotional_intensity: 0.15
+  cliffhanger_score: 0.15
+  conflict_score: 0.12
+  tension_arc: 0.10
+  lexical_hook_score: 0.08
+  revelation_score: 0.07
+  dialogue_density: 0.05
+  protagonist_presence: 0.04
+  speaker_variety: 0.03
+  position_in_episode: 0.02
+  sound_fx_density: 0.01
+  scene_boundary_bonus: 0.01
+
+  # Legacy LLM-derived features
+  llm_promotional_suitability: 0.10
+  llm_hook_potential: 0.05
+  llm_context_independence: 0.02
+
+# ---- Ranking & Deduplication ----------------------------
+ranking:
+  min_score_threshold: 0.30
+  diversity:
+    enabled: true
+    iou_threshold: 0.50
+
+# ---- Output Settings ------------------------------------
+output:
+  candidates_dir: "outputs/candidates"
+  ranked_promos_dir: "outputs/ranked_promos"
+  rejected_candidates_dir: "outputs/rejected_candidates"
+  reports_dir: "outputs/reports"
+  save_all_candidates: true
+  generate_markdown: true
+  generate_global_report: true
+  max_evidence_segments: 5

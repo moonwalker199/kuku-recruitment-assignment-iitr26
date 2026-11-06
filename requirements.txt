@@ -1,0 +1,15 @@
+# Kuku FM Promo Recommendation System — Python Dependencies
+#
+# Install with: pip install -r requirements.txt
+# Tested with Python 3.10+
+
+# --- Core ---
+pyyaml>=6.0.0           # YAML config loading
+python-dotenv>=1.0.0    # Load .env API keys
+
+# --- LLM Providers (optional — only needed when llm_enabled=true) ---
+google-generativeai>=0.8.0   # Google Gemini API
+openai>=1.0.0                # OpenAI GPT API
+
+# --- Progress & Display ---
+tqdm>=4.65.0            # Progress bars in CLI

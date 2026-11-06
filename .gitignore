@@ -1,0 +1,92 @@
+
+
+
+.env
+.env.*
+!.env.example
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Distribution & packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# IDE & editors
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# Operating system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Output & cache directories
+# Note: Keep directory structure tracked while ignoring transient outputs
+outputs/candidates/*.json
+outputs/candidates/*.tmp
+outputs/ranked_promos/*.json
+outputs/ranked_promos/*.tmp
+outputs/rejected_candidates/*.json
+outputs/rejected_candidates/*.tmp
+outputs/episode_analysis/*.json
+outputs/episode_analysis/*.tmp
+outputs/reports/*.json
+outputs/reports/*.tmp
+outputs/cache/
+
+# Temporary / intermediate files
+*.tmp
+*.temp
+*.log
