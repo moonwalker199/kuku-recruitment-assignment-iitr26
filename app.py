@@ -93,14 +93,17 @@ authenticate()
 # API CONFIGURATION
 # --------------------------------------------------
 
-api_key = get_secret("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
+# The app owner's Gemini key is an optional server-side fallback.
+# Never put a visitor's BYOK key into an environment variable.
 
-if not api_key:
-    st.error("GOOGLE_API_KEY is missing from Streamlit Secrets.")
-    st.stop()
+server_api_key = (
+    get_secret("GOOGLE_API_KEY")
+    or os.getenv("GOOGLE_API_KEY")
+)
 
-# The existing Gemini client reads this environment variable.
-os.environ["GOOGLE_API_KEY"] = str(api_key)
+if server_api_key:
+    # Existing server-side key behavior is preserved.
+    os.environ["GOOGLE_API_KEY"] = str(server_api_key)
 
 
 # --------------------------------------------------
@@ -115,12 +118,14 @@ def safe_filename(filename):
 
 def write_json(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
+
     with path.open("w", encoding="utf-8") as file:
         json.dump(data, file, indent=2, ensure_ascii=False)
 
 
 def read_json(path):
     path = Path(path)
+
     if not path.exists():
         return None
 
@@ -191,13 +196,19 @@ def parse_uploaded_files(uploaded_files, job_dir):
                 f"Parser returned an invalid result for {uploaded_file.name}."
             )
 
-        if not parsed.get("episode") or not isinstance(parsed.get("segments"), list):
+        if (
+            not parsed.get("episode")
+            or not isinstance(parsed.get("segments"), list)
+        ):
             raise ValueError(
                 f"Parsing failed for {uploaded_file.name}: "
                 "missing episode metadata or segments."
             )
 
-        parsed_filename = f"{index:03d}_{Path(original_name).stem}_parsed.json"
+        parsed_filename = (
+            f"{index:03d}_{Path(original_name).stem}_parsed.json"
+        )
+
         parsed_path = processed_dir / parsed_filename
         write_json(parsed_path, parsed)
 
@@ -206,8 +217,14 @@ def parse_uploaded_files(uploaded_files, job_dir):
         parse_summary.append({
             "file": uploaded_file.name,
             "episode": parsed.get("episode"),
-            "scenes": parsed.get("scene_count", len(parsed.get("scenes", []))),
-            "segments": parsed.get("segment_count", len(parsed["segments"])),
+            "scenes": parsed.get(
+                "scene_count",
+                len(parsed.get("scenes", [])),
+            ),
+            "segments": parsed.get(
+                "segment_count",
+                len(parsed["segments"]),
+            ),
             "parse_errors": len(parse_errors),
         })
 
@@ -225,7 +242,11 @@ def display_result_tab(title, data, filename):
         st.caption(f"{len(data)} records")
 
         if data:
-            st.dataframe(data, use_container_width=True, hide_index=True)
+            st.dataframe(
+                data,
+                use_container_width=True,
+                hide_index=True,
+            )
         else:
             st.info("No records in this category.")
     else:
@@ -239,10 +260,16 @@ def display_result_tab(title, data, filename):
 # --------------------------------------------------
 
 st.title("🎬 Microdrama Promo Discovery")
+
 st.write(
     "Upload screenplay episodes to discover, evaluate and rank "
     "potential promotional clips."
 )
+
+
+# --------------------------------------------------
+# SIDEBAR SETTINGS
+# --------------------------------------------------
 
 with st.sidebar:
     st.header("Pipeline settings")
@@ -281,10 +308,40 @@ with st.sidebar:
         value=30,
     )
 
-    st.caption(
-        "Model availability and quotas depend on your Google AI account."
+    st.divider()
+
+    st.header("Gemini API authentication")
+
+    user_api_key = st.text_input(
+        "Your Gemini API key (optional)",
+        type="password",
+        placeholder="Enter your own Gemini API key",
+        help=(
+            "If provided, this key takes priority over the app's "
+            "server-side Gemini key. Your key is sent to Google's "
+            "Gemini API for processing."
+        ),
     )
 
+    if user_api_key.strip():
+        st.success("Your own API key will be used for this run.")
+    elif server_api_key:
+        st.info("Using the application's configured Gemini API key.")
+    else:
+        st.warning(
+            "No server-side API key is configured. "
+            "Enter your own Gemini API key to run the pipeline."
+        )
+
+    st.caption(
+        "Model availability, request limits and billing depend on "
+        "the Google AI account associated with the selected key."
+    )
+
+
+# --------------------------------------------------
+# FILE UPLOAD
+# --------------------------------------------------
 
 st.subheader("1. Upload screenplay files")
 
@@ -295,23 +352,34 @@ uploaded_files = st.file_uploader(
 )
 
 if uploaded_files:
-    total_size = sum(len(file.getvalue()) for file in uploaded_files)
+    total_size = sum(
+        len(file.getvalue())
+        for file in uploaded_files
+    )
 
     col1, col2, col3 = st.columns(3)
+
     col1.metric("Files uploaded", len(uploaded_files))
-    col2.metric("Total size", f"{total_size / (1024 * 1024):.2f} MB")
+    col2.metric(
+        "Total size",
+        f"{total_size / (1024 * 1024):.2f} MB",
+    )
     col3.metric("Expected files", "50")
 
     if len(uploaded_files) < 50:
         st.info(
-            "You uploaded fewer than 50 files. This is allowed for testing; "
-            "the full assignment input contains 50 episodes."
+            "You uploaded fewer than 50 files. This is allowed for "
+            "testing; the full assignment input contains 50 episodes."
         )
 
     with st.expander("Uploaded filenames"):
         for file in uploaded_files:
             st.write(file.name)
 
+
+# --------------------------------------------------
+# RUN BUTTON
+# --------------------------------------------------
 
 st.warning(
     "A full run can take several minutes because the pipeline makes "
@@ -321,7 +389,10 @@ st.warning(
 run_button = st.button(
     "Parse and discover promos",
     type="primary",
-    disabled=not uploaded_files or not selected_model.strip(),
+    disabled=(
+        not uploaded_files
+        or not selected_model.strip()
+    ),
 )
 
 
@@ -330,10 +401,21 @@ run_button = st.button(
 # --------------------------------------------------
 
 if run_button:
+
     upload_error = validate_uploads(uploaded_files)
+
+    # BYOK takes priority over the server-side key.
+    effective_api_key = user_api_key.strip() or None
 
     if upload_error:
         st.error(upload_error)
+
+    elif not effective_api_key and not server_api_key:
+        st.error(
+            "No Gemini API key is available. "
+            "Enter your own key in the sidebar or ask the app "
+            "administrator to configure the server-side key."
+        )
 
     elif not pipeline_lock.acquire(blocking=False):
         st.error(
@@ -352,7 +434,13 @@ if run_button:
                 expanded=True,
             ) as status:
 
-                st.write("Step 1: Parsing and validating uploaded episodes...")
+                # ----------------------------------------
+                # STEP 1: PARSING
+                # ----------------------------------------
+
+                st.write(
+                    "Step 1: Parsing and validating uploaded episodes..."
+                )
 
                 processed_dir, parse_summary = parse_uploaded_files(
                     uploaded_files,
@@ -363,7 +451,8 @@ if run_button:
                 write_json(parse_summary_path, parse_summary)
 
                 total_parse_errors = sum(
-                    item["parse_errors"] for item in parse_summary
+                    item["parse_errors"]
+                    for item in parse_summary
                 )
 
                 st.write(
@@ -371,7 +460,13 @@ if run_button:
                     f"Parser-reported errors: {total_parse_errors}."
                 )
 
-                st.write("Step 2: Configuring the selected Gemini model...")
+                # ----------------------------------------
+                # STEP 2: MODEL CONFIGURATION
+                # ----------------------------------------
+
+                st.write(
+                    "Step 2: Configuring the selected Gemini model..."
+                )
 
                 cfg = load_config()
 
@@ -384,18 +479,36 @@ if run_button:
                     llm_cfg.provider = "google"
                     llm_cfg.model = selected_model
 
-                st.write("Step 3: Running the promo discovery pipeline...")
+                # ----------------------------------------
+                # STEP 3: PIPELINE EXECUTION
+                # ----------------------------------------
+
+                st.write(
+                    "Step 3: Running the promo discovery pipeline..."
+                )
+
+                run_kwargs = {
+                    "input_dir": str(processed_dir),
+                    "max_candidates_per_episode": int(max_candidates),
+                    "shortlist_size": int(shortlist_size),
+                    "output_root": job_dir / "outputs",
+                    "cache_root": job_dir / "cache",
+                }
+
+                # Only pass api_key when the visitor supplied BYOK.
+                # Never put the visitor's key into os.environ.
+                if effective_api_key:
+                    run_kwargs["api_key"] = effective_api_key
 
                 stats = run(
                     cfg,
-                    input_dir=str(processed_dir),
-                    max_candidates_per_episode=int(max_candidates),
-                    shortlist_size=int(shortlist_size),
-                    output_root=job_dir / "outputs",
-                    cache_root=job_dir / "cache",
+                    **run_kwargs,
                 )
 
-                write_json(job_dir / "execution_stats.json", stats)
+                write_json(
+                    job_dir / "execution_stats.json",
+                    stats,
+                )
 
                 status.update(
                     label="Pipeline completed successfully.",
@@ -403,6 +516,7 @@ if run_button:
                     expanded=False,
                 )
 
+            # Store output metadata only, never the API key.
             st.session_state.last_job_dir = str(job_dir)
             st.session_state.last_job_id = job_id
             st.session_state.last_parse_summary = parse_summary
@@ -423,6 +537,7 @@ if run_button:
 # --------------------------------------------------
 
 if st.session_state.get("last_job_dir"):
+
     job_dir = Path(st.session_state.last_job_dir)
     output_dir = job_dir / "outputs"
 
@@ -432,26 +547,37 @@ if st.session_state.get("last_job_dir"):
     stats = st.session_state.get("last_stats", {})
 
     metric_columns = st.columns(4)
+
     metric_columns[0].metric(
         "Episodes analysed",
         stats.get("episodes_analysed", "N/A"),
     )
+
     metric_columns[1].metric(
         "Candidates discovered",
         stats.get("candidates_discovered", "N/A"),
     )
+
     metric_columns[2].metric(
         "Candidates shortlisted",
         stats.get("candidates_shortlisted", "N/A"),
     )
+
     metric_columns[3].metric(
         "API calls",
         stats.get("api_calls", "N/A"),
     )
 
-    st.caption(f"Job ID: {st.session_state.last_job_id}")
+    st.caption(
+        f"Job ID: {st.session_state.last_job_id}"
+    )
+
+    # ----------------------------------------
+    # PARSING SUMMARY
+    # ----------------------------------------
 
     with st.expander("Parsing summary"):
+
         st.dataframe(
             st.session_state.last_parse_summary,
             use_container_width=True,
@@ -464,18 +590,29 @@ if st.session_state.get("last_job_dir"):
             "parse_summary.json",
         )
 
+    # ----------------------------------------
+    # LOAD OUTPUTS
+    # ----------------------------------------
+
     ranked = read_json(
         output_dir / "ranked_promos" / "ranked_promos.json"
     )
+
     accepted = read_json(
         output_dir / "ranked_promos" / "accepted_promos.json"
     )
+
     review = read_json(
         output_dir / "ranked_promos" / "review_promos.json"
     )
+
     rejected = read_json(
         output_dir / "rejected_candidates" / "rejected_promos.json"
     )
+
+    # ----------------------------------------
+    # RESULT TABS
+    # ----------------------------------------
 
     tabs = st.tabs([
         "Ranked promos",

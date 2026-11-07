@@ -654,6 +654,7 @@ def run(
     shortlist_size: int = 30,
     output_root: str | Path = "outputs",
     cache_root: str | Path | None = None,
+    api_key: str | None = None,
 ) -> dict:
     """Execute discovery, optimization, evaluation and ranking."""
 
@@ -716,29 +717,26 @@ def run(
     # --------------------------------------------------------
     # Stage 2: Episode-level LLM analysis
     # --------------------------------------------------------
+    # --------------------------------------------------------
 
-    # analyzer = SemanticAnalyzer(cfg)
-    if cache_root is None:
-        analyzer = SemanticAnalyzer(cfg)
-    else:
+    # --------------------------------------------------------
+
+    analyzer_kwargs = {}
+
+    if cache_root is not None:
         cache_root = Path(cache_root)
-        analyzer = SemanticAnalyzer(
-        cfg,
-        cache_dir=cache_root / "episode_analysis",
-        boundary_cache_dir=cache_root / "boundary_optimization",
-        evaluation_cache_dir=cache_root / "promo_evaluation",
-    )
+        analyzer_kwargs = {
+            "cache_dir": cache_root / "episode_analysis",
+            "boundary_cache_dir": cache_root / "boundary_optimization",
+            "evaluation_cache_dir": cache_root / "promo_evaluation",
+        }
 
+    if api_key:
+        analyzer_kwargs["api_key"] = api_key
+
+    analyzer = SemanticAnalyzer(cfg, **analyzer_kwargs)
 
     stats["llm_enabled"] = analyzer.is_available
-
-    if not analyzer.is_available:
-        raise RuntimeError(
-            "Episode-level discovery requires an available LLM. "
-            "Check llm_enabled and your API key. Use --no-llm only "
-            "for configuration or parser checks, not discovery."
-        )
-
     with Timer() as analysis_timer:
         episode_analyses = analyzer.analyze_episodes(
             episodes,
@@ -746,10 +744,11 @@ def run(
         )
 
     logger.info(
-        "Episode-level analysis completed in %s.",
+        "Episode analysis completed: %d episodes analysed in %s.",
+        len(episode_analyses),
         analysis_timer,
     )
-
+    
     # --------------------------------------------------------
     # Stage 3: Prepare discovered candidates
     # --------------------------------------------------------
