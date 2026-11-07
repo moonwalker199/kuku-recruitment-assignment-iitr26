@@ -59,9 +59,13 @@ LLM_FEATURE_KEYS = (
     "promotional_suitability",
 )
 
-_ANALYSIS_VERSION = "episode_analysis_v1"
-_BOUNDARY_VERSION = "boundary_optimization_v1"
-_EVALUATION_VERSION = "promo_evaluation_v1"
+# _ANALYSIS_VERSION = "episode_analysis_v1"
+# _BOUNDARY_VERSION = "boundary_optimization_v1"
+# _EVALUATION_VERSION = "promo_evaluation_v1"
+
+_ANALYSIS_VERSION = "episode_analysis_v2"
+_BOUNDARY_VERSION = "boundary_optimization_v2"
+_EVALUATION_VERSION = "promo_evaluation_v2"
 
 _MAX_RUNNING_SUMMARY_CHARS = 6000
 
@@ -784,8 +788,17 @@ class SemanticAnalyzer:
                     candidate=candidate,
                 )
 
+                # if evaluation is None:
+                #     result["evaluation_status"] = "failed"
+                #     result["recommendation"] = "review"
+                #     self.stats["evaluation_candidates_failed"] += 1
+
                 if evaluation is None:
                     result["evaluation_status"] = "failed"
+                    result["evaluation_error"] = candidate.get(
+                        "evaluation_error",
+                        "unknown_evaluation_error",
+                    )
                     result["recommendation"] = "review"
                     self.stats["evaluation_candidates_failed"] += 1
                 else:
@@ -838,6 +851,9 @@ class SemanticAnalyzer:
 
         candidate_id = str(candidate.get("candidate_id", "UNKNOWN"))
 
+        # Clear any previous diagnostic value.
+        candidate.pop("evaluation_error", None)
+
         cache_path = self._get_evaluation_cache_path(
             episode,
             candidate,
@@ -871,10 +887,10 @@ class SemanticAnalyzer:
                 candidate=candidate,
             )
         except Exception as exc:
-            logger.error(
-                "Could not build promo evaluation prompt for %s: %s",
+            candidate["evaluation_error"] = "prompt_construction_failed"
+            logger.exception(
+                "Could not build promo evaluation prompt for %s.",
                 candidate_id,
-                exc,
             )
             return None
 
@@ -882,17 +898,18 @@ class SemanticAnalyzer:
 
         try:
             raw_response = self._evaluation_client.call_json(prompt)
-        except Exception as exc:
+        except Exception:
             self.stats["evaluation_failed_calls"] += 1
-            logger.error(
-                "Promo evaluation API call failed for %s: %s",
+            candidate["evaluation_error"] = "api_call_exception"
+            logger.exception(
+                "Promo evaluation API call failed for %s.",
                 candidate_id,
-                exc,
             )
             return None
 
         if raw_response is None:
             self.stats["evaluation_failed_calls"] += 1
+            candidate["evaluation_error"] = "empty_api_response"
             logger.warning(
                 "Promo evaluation LLM returned no response for %s.",
                 candidate_id,
@@ -907,9 +924,42 @@ class SemanticAnalyzer:
 
         if validated is None:
             self.stats["evaluation_failed_calls"] += 1
+            candidate["evaluation_error"] = "response_validation_failed"
+
+            # Preserve the raw response for debugging.
+            safe_candidate_id = "".join(
+                char if char.isalnum() or char in ("-", "_") else "_"
+                for char in candidate_id
+            )
+
+            diagnostic_dir = Path("outputs/test")
+            diagnostic_dir.mkdir(parents=True, exist_ok=True)
+
+            diagnostic_path = (
+                diagnostic_dir
+                / f"{safe_candidate_id}_evaluation_raw_response.txt"
+            )
+
+            try:
+                with diagnostic_path.open("w", encoding="utf-8") as file:
+                    json.dump(
+                        raw_response,
+                        file,
+                        ensure_ascii=False,
+                        indent=2,
+                        default=str,
+                    )
+            except Exception:
+                logger.exception(
+                    "Could not save raw evaluation response for %s.",
+                    candidate_id,
+                )
+
             logger.warning(
-                "Promo evaluation response validation failed for %s.",
+                "Promo evaluation response validation failed for %s. "
+                "Raw response saved to %s.",
                 candidate_id,
+                diagnostic_path,
             )
             return None
 
@@ -917,7 +967,6 @@ class SemanticAnalyzer:
         self._write_cache(cache_path, raw_response)
 
         return self._format_evaluation_result(validated)
-
     @staticmethod
     def _format_evaluation_result(validated: dict) -> dict:
         """Return normalized evaluation fields for a candidate."""

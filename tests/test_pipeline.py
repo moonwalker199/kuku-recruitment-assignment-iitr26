@@ -5,7 +5,109 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from main import run
+from main import (
+    deduplicate_evaluated_candidates,
+    rank_evaluated_candidates,
+    run,
+)
+
+
+# ------------------------------------------------------------
+# DEDUPLICATION AND RANKING TEST
+# ------------------------------------------------------------
+
+def test_deduplication_and_ranking():
+    def make_candidate(
+        candidate_id,
+        episode_name,
+        start,
+        end,
+        score,
+    ):
+        return {
+            "candidate_id": candidate_id,
+            "episode": episode_name,
+            "start_seconds": start,
+            "end_seconds": end,
+            "overall_score": score,
+            "evaluation_status": "success",
+            "recommendation": "accept",
+            "evaluation_scores": {
+                "hook_first_3_seconds": 0.90,
+            },
+        }
+
+    candidates = [
+        # A and B overlap heavily. A has the higher score.
+        make_candidate("A", "Episode 1", 0, 30, 0.90),
+        make_candidate("B", "Episode 1", 5, 35, 0.80),
+
+        # C does not overlap with A.
+        make_candidate("C", "Episode 1", 40, 70, 0.85),
+
+        # D overlaps with A and B in time, but belongs to Episode 2.
+        make_candidate("D", "Episode 2", 5, 35, 0.82),
+    ]
+
+    retained, suppressed = deduplicate_evaluated_candidates(
+        candidates,
+        iou_threshold=0.50,
+        enabled=True,
+    )
+
+    retained_ids = {
+        item["candidate_id"]
+        for item in retained
+    }
+
+    suppressed_ids = {
+        item["candidate_id"]
+        for item in suppressed
+    }
+
+    assert retained_ids == {"A", "C", "D"}, (
+        f"Unexpected retained candidates: {retained_ids}"
+    )
+
+    assert suppressed_ids == {"B"}, (
+        f"Unexpected suppressed candidates: {suppressed_ids}"
+    )
+
+    suppressed_b = next(
+        item for item in suppressed
+        if item["candidate_id"] == "B"
+    )
+
+    assert suppressed_b["duplicate_of_candidate_id"] == "A"
+    assert suppressed_b["deduplication_status"] == "suppressed"
+
+    print("Overlapping candidate suppression: PASS")
+    print("Higher-scoring candidate retained: PASS")
+    print("Non-overlapping candidate retained: PASS")
+    print("Cross-episode candidates kept separate: PASS")
+
+    ranked, rejected = rank_evaluated_candidates(retained)
+
+    ranked_ids = [
+        item["candidate_id"]
+        for item in ranked
+    ]
+
+    assert ranked_ids == ["A", "C", "D"], (
+        f"Unexpected ranking order: {ranked_ids}"
+    )
+
+    assert [
+        item["final_rank"]
+        for item in ranked
+    ] == [1, 2, 3]
+
+    assert rejected == []
+
+    print("Final score-based ranking: PASS")
+
+
+test_deduplication_and_ranking()
 
 
 # ------------------------------------------------------------
@@ -235,9 +337,15 @@ try:
         .read_text(encoding="utf-8")
     )
 
+    rejected = json.loads(
+        (output_root / "rejected_candidates/rejected_promos.json")
+        .read_text(encoding="utf-8")
+    )
+
     assert len(discovered) == 1
     assert len(ranked) == 1
     assert len(accepted) == 1
+    assert len(rejected) == 0
 
     assert ranked[0]["candidate_id"] == "PIPELINE_TEST_01"
     assert ranked[0]["final_rank"] == 1
@@ -254,6 +362,7 @@ try:
     assert stats["shortlisted_candidates"] == 1
     assert stats["accepted_promos"] == 1
     assert stats["evaluation_api_calls"] == 1
+    assert stats["duplicate_promos_suppressed"] == 0
 
     saved_stats = json.loads(
         (output_root / "reports/discovery_stats.json")
@@ -262,6 +371,7 @@ try:
 
     assert saved_stats["accepted_promos"] == 1
     assert saved_stats["evaluation_api_calls"] == 1
+    assert saved_stats["duplicate_promos_suppressed"] == 0
 
     print("Execution statistics: PASS")
     print("Statistics file consistency: PASS")

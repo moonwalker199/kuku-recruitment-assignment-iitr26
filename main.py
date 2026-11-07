@@ -410,34 +410,175 @@ def refresh_candidate_source_segments(
 # ============================================================
 # FINAL RANKING
 # ============================================================
+def deduplicate_evaluated_candidates(
+    candidates: list[dict],
+    iou_threshold: float = 0.5,
+    enabled: bool = True,
+) -> tuple[list[dict], list[dict]]:
+    """
+    Suppress highly overlapping evaluated promos within the same episode.
+
+    Only successfully evaluated accept/review candidates compete.
+    The higher-scoring candidate is retained.
+
+    Returns:
+        retained_candidates, suppressed_candidates
+    """
+
+    if not 0.0 < iou_threshold <= 1.0:
+        raise ValueError("iou_threshold must be in the range (0, 1].")
+
+    retained = []
+    suppressed = []
+
+    if not enabled:
+        for candidate in candidates:
+            result = dict(candidate)
+            result["deduplication_status"] = "disabled"
+            retained.append(result)
+
+        return retained, suppressed
+
+    eligible_by_episode = defaultdict(list)
+    ineligible = []
+
+    for candidate in candidates:
+        result = dict(candidate)
+
+        is_eligible = (
+            result.get("evaluation_status") == "success"
+            and result.get("recommendation") in {"accept", "review"}
+        )
+
+        if is_eligible:
+            eligible_by_episode[
+                str(result.get("episode", "UNKNOWN"))
+            ].append(result)
+        else:
+            result["deduplication_status"] = "not_applicable"
+            ineligible.append(result)
+
+    def score(candidate: dict) -> float:
+        try:
+            return float(candidate.get("overall_score", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            return 0.0
+
+    def hook_score(candidate: dict) -> float:
+        try:
+            return float(
+                candidate.get("evaluation_scores", {}).get(
+                    "hook_first_3_seconds", 0.0
+                ) or 0.0
+            )
+        except (TypeError, ValueError):
+            return 0.0
+
+    for episode_name, episode_candidates in eligible_by_episode.items():
+        ordered = sorted(
+            episode_candidates,
+            key=lambda item: (
+                -score(item),
+                -hook_score(item),
+                str(item.get("candidate_id", "")),
+            ),
+        )
+
+        kept_for_episode = []
+
+        for candidate in ordered:
+            try:
+                start = float(candidate["start_seconds"])
+                end = float(candidate["end_seconds"])
+            except (KeyError, TypeError, ValueError):
+                candidate["deduplication_status"] = "invalid_timestamps"
+                retained.append(candidate)
+                continue
+
+            if end <= start:
+                candidate["deduplication_status"] = "invalid_timestamps"
+                retained.append(candidate)
+                continue
+
+            duplicate_of = None
+
+            for kept in kept_for_episode:
+                kept_start = float(kept["start_seconds"])
+                kept_end = float(kept["end_seconds"])
+
+                intersection = max(
+                    0.0,
+                    min(end, kept_end) - max(start, kept_start),
+                )
+
+                union = (
+                    max(end, kept_end) - min(start, kept_start)
+                )
+
+                iou = intersection / union if union > 0 else 0.0
+
+                if iou >= iou_threshold:
+                    duplicate_of = kept
+                    break
+
+            if duplicate_of is not None:
+                candidate["deduplication_status"] = "suppressed"
+                candidate["duplicate_of_candidate_id"] = (
+                    duplicate_of.get("candidate_id")
+                )
+                candidate["rejection_reason"] = (
+                    "overlap_with_higher_scoring_candidate"
+                )
+                candidate["overlap_iou_threshold"] = iou_threshold
+                suppressed.append(candidate)
+            else:
+                candidate["deduplication_status"] = "retained"
+                kept_for_episode.append(candidate)
+                retained.append(candidate)
+
+    retained.extend(ineligible)
+
+    return retained, suppressed
+
+
 
 def rank_evaluated_candidates(
     candidates: list[dict],
 ) -> tuple[list[dict], list[dict]]:
     """
-    Rank candidates using semantic evaluation results.
+    Rank candidates by semantic score.
 
-    Preliminary structural scores are not used for final ranking.
-    Failed or skipped evaluations remain available for human review.
+    Recommendation labels determine output categories, not ranking order.
     """
 
-    recommendation_priority = {
-        "accept": 0,
-        "review": 1,
-        "reject": 2,
-    }
+    def safe_score(value: Any) -> float:
+        try:
+            return float(value or 0.0)
+        except (TypeError, ValueError):
+            return 0.0
 
+    # ranked = sorted(
+    #     candidates,
+    #     key=lambda item: (
+    #         -float(item.get("overall_score", 0.0) or 0.0),
+    #         -float(
+    #             item.get("evaluation_scores", {}).get(
+    #                 "hook_first_3_seconds", 0.0
+    #             ) or 0.0
+    #         ),
+    #         str(item.get("episode", "")),
+    #         str(item.get("candidate_id", "")),
+    #     ),
+    # )
     ranked = sorted(
         candidates,
         key=lambda item: (
-            recommendation_priority.get(
-                item.get("recommendation", "review"),
-                1,
+            -safe_score(item.get("overall_score")),
+            -safe_score(
+                item.get("evaluation_scores", {}).get(
+                    "hook_first_3_seconds", 0.0
+                )
             ),
-            -float(item.get("overall_score", 0.0) or 0.0),
-            -float(item.get("evaluation_scores", {}).get(
-                "hook_first_3_seconds", 0.0
-            ) or 0.0),
             str(item.get("episode", "")),
             str(item.get("candidate_id", "")),
         ),
@@ -544,7 +685,13 @@ def run(
         "evaluation_accepted": 0,
         "evaluation_review": 0,
         "evaluation_rejected": 0,
+
+        "deduplication_enabled": False,
+        "deduplication_iou_threshold": 0.5,
+        "deduplication_candidates_received": 0,
+        "duplicate_promos_suppressed": 0,
     }
+
 
     # --------------------------------------------------------
     # Stage 1: Load episodes
@@ -661,12 +808,37 @@ def run(
     )
 
     # --------------------------------------------------------
-    # Stage 7: Final ranking and separation
+    # Stage 7: Deduplication, final ranking and separation
     # --------------------------------------------------------
 
-    ranked_candidates, rejected_candidates = (
-        rank_evaluated_candidates(evaluated_candidates)
+    diversity_cfg = getattr(
+        getattr(cfg, "ranking", None),
+        "diversity",
+        None,
     )
+
+    dedup_enabled = getattr(diversity_cfg, "enabled", True)
+    dedup_iou_threshold = getattr(
+        diversity_cfg,
+        "iou_threshold",
+        0.5,
+    )
+
+    deduplicated_candidates, suppressed_candidates = (
+        deduplicate_evaluated_candidates(
+            evaluated_candidates,
+            iou_threshold=dedup_iou_threshold,
+            enabled=dedup_enabled,
+        )
+    )
+
+    ranked_candidates, rejected_candidates = (
+        rank_evaluated_candidates(deduplicated_candidates)
+    )
+
+    # Suppressed duplicates are also retained in the rejected output
+    # so the human reviewer can inspect what was removed.
+    rejected_candidates.extend(suppressed_candidates)
 
     accepted_candidates = [
         candidate
@@ -681,10 +853,12 @@ def run(
     ]
 
     logger.info(
-        "Final ranking: %d accepted, %d review, %d rejected.",
+        "Final ranking: %d accepted, %d review, %d rejected, "
+        "%d duplicates suppressed.",
         len(accepted_candidates),
         len(review_candidates),
         len(rejected_candidates),
+        len(suppressed_candidates),
     )
 
     # --------------------------------------------------------
@@ -821,12 +995,22 @@ def run(
 
         "accepted_promos": len(accepted_candidates),
         "review_promos": len(review_candidates),
-        "rejected_promos": len(rejected_candidates),
+       "rejected_promos": sum(  
+            1
+            for candidate in ranked_candidates
+            if candidate.get("recommendation") == "reject"
+),
+        "rejected_output_items": len(rejected_candidates),
 
         "analysis_runtime": str(analysis_timer),
         "boundary_runtime": str(boundary_timer),
         "evaluation_runtime": str(evaluation_timer),
         "preparation_runtime": str(preparation_timer),
+
+        "deduplication_enabled": dedup_enabled,
+        "deduplication_iou_threshold": dedup_iou_threshold,
+        "deduplication_candidates_received": len(evaluated_candidates),
+        "duplicate_promos_suppressed": len(suppressed_candidates),
     })
 
     write_json(stats, stats_path)
@@ -918,7 +1102,9 @@ def main() -> None:
     print("-" * 60)
     print(f"  Accepted promos         : {stats['accepted_promos']}")
     print(f"  Needs human review      : {stats['review_promos']}")
-    print(f"  Rejected promos         : {stats['rejected_promos']}")
+    print(f"  Semantically rejected   : {stats['rejected_promos']}")
+    print(f"  Duplicates suppressed   : {stats['duplicate_promos_suppressed']}")
+    print(f"  Rejected output entries : {stats['rejected_output_items']}")
     print("=" * 60)
     print("  Outputs:")
     print("  outputs/candidates/discovered_candidates.json")
