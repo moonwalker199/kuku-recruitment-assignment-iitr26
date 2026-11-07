@@ -1,0 +1,392 @@
+[
+  {
+    "candidate_id": "Episode 8_C01",
+    "start_segment_id": "E8_S1_008",
+    "end_segment_id": "E8_S1_024",
+    "segment_ids": [
+      "E8_S1_008",
+      "E8_S1_009",
+      "E8_S1_010",
+      "E8_S1_011",
+      "E8_S1_012",
+      "E8_S1_013",
+      "E8_S1_014",
+      "E8_S1_015",
+      "E8_S1_016",
+      "E8_S1_017",
+      "E8_S1_018",
+      "E8_S1_019",
+      "E8_S1_020",
+      "E8_S1_021",
+      "E8_S1_022",
+      "E8_S1_023",
+      "E8_S1_024"
+    ],
+    "start_seconds": 7.8,
+    "end_seconds": 28.1,
+    "duration_seconds": 20.3,
+    "hook": "Alexander quietly brings yarrow flowers to Juliana, sparking a conversation about his unexpected knowledge of battlefield medicine.",
+    "cliffhanger": "Juliana notices his rugged appearance and hesitates as she looks intently at his scarred visage, leaving a sense of lingering mystery about his past.",
+    "standalone_clarity": "A new viewer can easily see an intimate moment between an exiled noblewoman and her scarred husband, though his exact military background remains mysterious.",
+    "narrative_context": "Alexander demonstrates his practical survival skills and shares a quiet moment of connection with Juliana over her mother's herbal book.",
+    "promotional_strength": "Highlights the tender chemistry and contrast between Juliana's refined background and her husband's rugged survivalist nature.",
+    "evidence": [
+      {
+        "segment_id": "E8_S1_008",
+        "timestamp": "00:07.80-00:10.50",
+        "observation": "Alexander enters quietly and sets down fresh yarrow flowers."
+      },
+      {
+        "segment_id": "E8_S1_013",
+        "timestamp": "00:12.00-00:14.60",
+        "observation": "Alexander reveals he knows the herb is good for wounds and fever."
+      },
+      {
+        "segment_id": "E8_S1_017",
+        "timestamp": "00:16.30-00:18.90",
+        "observation": "Alexander explains that soldiers learn quickly which plants keep a man alive."
+      }
+    ],
+    "candidate_confidence": 0.9,
+    "episode": "Episode 8",
+    "logline": "As Juliana inspects her late mother's weathered herbal grimoire, Alexander bonds with her over rustic medicinal knowledge and war-worn memories, gently altering her perception of what true wealth means.",
+    "source_file": "episode-008-Episode 1671710.txt",
+    "source_segments": [
+      {
+        "segment_id": "E8_S1_008",
+        "scene_number": 1,
+        "kind": "camera",
+        "label": "CAMERA",
+        "speaker": null,
+        "delivery": null,
+        "start": "00:07.80",
+        "end": "00:10.50",
+        "start_seconds": 7.8,
+        "end_seconds": 10.5,
+        "duration_seconds": 2.7,
+        "text": "Medium shot as Alexander enters the dim room behind Juliana, quietly stepping up to the rustic table.",
+        "source_line": 42
+      },
+      {
+        "segment_id": "E8_S1_009",
+        "scene_number": 1,
+        "kind": "action",
+        "label": "ACTION",
+        "speaker": null,
+        "delivery": null,
+        "start": "00:08.50",
+        "end": "00:10.50",
+        "start_seconds": 8.5,
+        "end_seconds": 10.5,
+        "duration_seconds": 2.0,
+        "text": "Alexander gently sets down a fresh bundle of small white herbal flowers tied with twine beside the open book.",
+        "source_line": 46
+      },
+      {
+        "segment_id": "E8_S1_010",
+        "scene_number": 1,
+        "kind": "camera",
+        "label": "CAMERA",
+        "speaker": null,
+        "delivery": null,
+        "start": "00:10.50",
+        "end": "00:11.90",
+        "start_seconds": 10.5,
+        "end_seconds": 11.9,
+        "duration_seconds": 1.4,
+        "text": "Low-angle medium close-up of Juliana looking up toward Alexander in pleasant surprise.",
+        "source_line": 50
+      },
+      {
+        "segment_id": "E8_S1_011",
+        "scene_number": 1,
+        "kind": "dialogue",
+        "label": "JULIANA (Curious, Recognizing)",
+        "speaker": "JULIANA",
+        "delivery": "Curious, Recognizing",
+        "start": "00:10.50",
+        "end": "00:11.80",
+        "start_seconds": 10.5,
+        "end_seconds": 11.8,
+        "duration_seconds": 1.3,
+        "text": "Yarrow.",
+        "source_line": 54
+      },
+      {
+        "segment_id": "E8_S1_012",
+        "scene_number": 1,
+        "kind": "camera",
+        "label": "CAMERA",
+        "speaker": null,
+        "delivery": null,
+        "start": "00:11.90",
+        "end": "00:15.00",
+        "start_seconds": 11.9,
+        "end_seconds": 15.0,
+        "duration_seconds": 3.1,
+        "text": "Close-up of Alexander looking down at her, the firelight catching the rugged scar across his face.",
+        "source_line": 58
+      },
+      {
+        "segment_id": "E8_S1_013",
+        "scene_number": 1,
+        "kind": "dialogue",
+        "label": "ALEXANDER (Calm, Knowledgeable)",
+        "speaker": "ALEXANDER",
+        "delivery": "Calm, Knowledgeable",
+        "start": "00:12.00",
+        "end": "00:14.60",
+        "start_seconds": 12.0,
+        "end_seconds": 14.6,
+        "duration_seconds": 2.6,
+        "text": "Good for wounds. Fever, too.",
+        "source_line": 62
+      },
+      {
+        "segment_id": "E8_S1_014",
+        "scene_number": 1,
+        "kind": "camera",
+        "label": "CAMERA",
+        "speaker": null,
+        "delivery": null,
+        "start": "00:15.00",
+        "end": "00:16.30",
+        "start_seconds": 15.0,
+        "end_seconds": 16.3,
+        "duration_seconds": 1.3,
+        "text": "Medium close-up of Juliana looking up at him with genuine curiosity.",
+        "source_line": 66
+      },
+      {
+        "segment_id": "E8_S1_015",
+        "scene_number": 1,
+        "kind": "dialogue",
+        "label": "JULIANA (Inquiring, Soft)",
+        "speaker": "JULIANA",
+        "delivery": "Inquiring, Soft",
+        "start": "00:15.10",
+        "end": "00:16.10",
+        "start_seconds": 15.1,
+        "end_seconds": 16.1,
+        "duration_seconds": 1.0,
+        "text": "How do you know that?",
+        "source_line": 70
+      },
+      {
+        "segment_id": "E8_S1_016",
+        "scene_number": 1,
+        "kind": "camera",
+        "label": "CAMERA",
+        "speaker": null,
+        "delivery": null,
+        "start": "00:16.30",
+        "end": "00:19.30",
+        "start_seconds": 16.3,
+        "end_seconds": 19.3,
+        "duration_seconds": 3.0,
+        "text": "Close-up of Alexander speaking in a steady, measured tone.",
+        "source_line": 74
+      },
+      {
+        "segment_id": "E8_S1_017",
+        "scene_number": 1,
+        "kind": "dialogue",
+        "label": "ALEXANDER (Somber, Matter-of-Fact)",
+        "speaker": "ALEXANDER",
+        "delivery": "Somber, Matter-of-Fact",
+        "start": "00:16.30",
+        "end": "00:18.90",
+        "start_seconds": 16.3,
+        "end_seconds": 18.9,
+        "duration_seconds": 2.6,
+        "text": "Soldiers learn quickly which plants keep a man alive.",
+        "source_line": 78
+      },
+      {
+        "segment_id": "E8_S1_018",
+        "scene_number": 1,
+        "kind": "camera",
+        "label": "CAMERA",
+        "speaker": null,
+        "delivery": null,
+        "start": "00:19.30",
+        "end": "00:21.50",
+        "start_seconds": 19.3,
+        "end_seconds": 21.5,
+        "duration_seconds": 2.2,
+        "text": "Insert shot of Juliana's hands gently arranging several tied bundles of dried yarrow sprigs on the tabletop.",
+        "source_line": 82
+      },
+      {
+        "segment_id": "E8_S1_019",
+        "scene_number": 1,
+        "kind": "dialogue",
+        "label": "JULIANA (Observant, Lightly Teasing)",
+        "speaker": "JULIANA",
+        "delivery": "Observant, Lightly Teasing",
+        "start": "00:19.40",
+        "end": "00:21.80",
+        "start_seconds": 19.4,
+        "end_seconds": 21.8,
+        "duration_seconds": 2.4,
+        "text": "You know more about healing than you let on.",
+        "source_line": 86
+      },
+      {
+        "segment_id": "E8_S1_020",
+        "scene_number": 1,
+        "kind": "camera",
+        "label": "CAMERA",
+        "speaker": null,
+        "delivery": null,
+        "start": "00:21.50",
+        "end": "00:24.30",
+        "start_seconds": 21.5,
+        "end_seconds": 24.3,
+        "duration_seconds": 2.8,
+        "text": "Close-up of Alexander, bathed in warm hearth embers, offering a subtle, knowing half-smile.",
+        "source_line": 90
+      },
+      {
+        "segment_id": "E8_S1_021",
+        "scene_number": 1,
+        "kind": "dialogue",
+        "label": "ALEXANDER (Quiet, Gritty)",
+        "speaker": "ALEXANDER",
+        "delivery": "Quiet, Gritty",
+        "start": "00:22.80",
+        "end": "00:24.20",
+        "start_seconds": 22.8,
+        "end_seconds": 24.2,
+        "duration_seconds": 1.4,
+        "text": "Enough to survive.",
+        "source_line": 94
+      },
+      {
+        "segment_id": "E8_S1_022",
+        "scene_number": 1,
+        "kind": "camera",
+        "label": "CAMERA",
+        "speaker": null,
+        "delivery": null,
+        "start": "00:24.30",
+        "end": "00:26.50",
+        "start_seconds": 24.3,
+        "end_seconds": 26.5,
+        "duration_seconds": 2.2,
+        "text": "Medium close-up of Juliana setting down a bunch of flowers and looking intently at his rugged visage.",
+        "source_line": 98
+      },
+      {
+        "segment_id": "E8_S1_023",
+        "scene_number": 1,
+        "kind": "dialogue",
+        "label": "JULIANA (Hesitant, Soft)",
+        "speaker": "JULIANA",
+        "delivery": "Hesitant, Soft",
+        "start": "00:25.00",
+        "end": "00:26.80",
+        "start_seconds": 25.0,
+        "end_seconds": 26.8,
+        "duration_seconds": 1.8,
+        "text": "Your hair and beard...",
+        "source_line": 102
+      },
+      {
+        "segment_id": "E8_S1_024",
+        "scene_number": 1,
+        "kind": "camera",
+        "label": "CAMERA",
+        "speaker": null,
+        "delivery": null,
+        "start": "00:26.50",
+        "end": "00:28.10",
+        "start_seconds": 26.5,
+        "end_seconds": 28.1,
+        "duration_seconds": 1.6,
+        "text": "Medium shot of Alexander standing tall over her, looking down patiently.",
+        "source_line": 106
+      }
+    ],
+    "structural_signals": {
+      "dialogue_share": 0.4118,
+      "speaker_diversity": 0.5,
+      "scene_diversity": 0.3333,
+      "kind_transition_ratio": 1.0,
+      "segment_density": 0.8374,
+      "structural_score": 0.6036
+    },
+    "preliminary_score": 0.6925,
+    "start_timestamp": "00:07.80",
+    "end_timestamp": "00:28.10",
+    "boundary_status": "success",
+    "boundary_option_id": "B01",
+    "boundary_reasoning": "Option B01 encompasses the entire continuous promotional narrative from Alexander's entrance with the yarrow flowers to Juliana's hesitant inquiry about his appearance. It provides an effective opening that establishes their intimate dynamic, maintains clear context throughout their dialogue about battlefield survival, and ends on a strong cliffhanger that leaves his mysterious past unresolved, fitting comfortably within the 20 to 60 second duration requirement.",
+    "boundary_confidence": 1.0,
+    "evaluation_status": "success",
+    "evaluation_scores": {
+      "hook_first_3_seconds": 0.3,
+      "cliffhanger": 0.4,
+      "standalone_clarity": 0.7,
+      "emotional_impact": 0.4,
+      "promo_suitability": 0.4
+    },
+    "evaluation_assessments": {
+      "hook_first_3_seconds": {
+        "score": 0.3,
+        "reasoning": "The clip begins with Alexander quietly entering a dim room and setting down flowers, which lacks strong immediate tension or surprise to stop a scrolling user.",
+        "evidence_segment_ids": [
+          "E8_S1_008",
+          "E8_S1_009"
+        ]
+      },
+      "cliffhanger": {
+        "score": 0.4,
+        "reasoning": "The excerpt ends with Juliana commenting on his appearance and looking intently at his visage, creating mild intrigue about his past, but it lacks a strong narrative cliffhanger or unresolved conflict.",
+        "evidence_segment_ids": [
+          "E8_S1_023",
+          "E8_S1_024"
+        ]
+      },
+      "standalone_clarity": {
+        "score": 0.7,
+        "reasoning": "A new viewer can easily understand the basic situation: a quiet, intimate exchange between two characters where one reveals unexpected medical knowledge from a military past.",
+        "evidence_segment_ids": [
+          "E8_S1_011",
+          "E8_S1_013",
+          "E8_S1_017"
+        ]
+      },
+      "emotional_impact": {
+        "score": 0.4,
+        "reasoning": "The conversation establishes a gentle, quiet chemistry and subtle curiosity, but the emotional stakes remain low and do not build to a powerful impact.",
+        "evidence_segment_ids": [
+          "E8_S1_015",
+          "E8_S1_019",
+          "E8_S1_021"
+        ]
+      },
+      "promo_suitability": {
+        "score": 0.4,
+        "reasoning": "While it showcases character dynamics well, the sequence is too low-key and quiet to function as an effective, high-converting short-form advertisement.",
+        "evidence_segment_ids": [
+          "E8_S1_008",
+          "E8_S1_024"
+        ]
+      }
+    },
+    "overall_score": 0.44,
+    "recommendation": "reject",
+    "primary_weakness": "The excerpt is overly subdued, lacking a compelling hook in the first three seconds and a high-stakes cliffhanger to drive viewer conversion.",
+    "evaluation_weights": {
+      "hook_first_3_seconds": 0.2,
+      "cliffhanger": 0.25,
+      "standalone_clarity": 0.2,
+      "emotional_impact": 0.15,
+      "promo_suitability": 0.2
+    },
+    "evaluation_duration_seconds": 20.3,
+    "deduplication_status": "not_applicable",
+    "final_rank": 29
+  }
+]
