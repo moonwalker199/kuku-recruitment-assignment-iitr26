@@ -1,0 +1,106 @@
+{
+  "episode_number": "Episode 8",
+  "episode_summary": "Juliana inspects her late mother's worn herbal grimoire in the woodland cottage. Alexander joins her, bringing fresh yarrow and revealing his military background through his knowledge of medicinal plants and war scars. Juliana playfully offers to trim his beard, which Alexander gently declines for now. As they review the herb book together by the warm hearth, Juliana opens up about her past loss of wealth, realizing she may have found true value and peace in her new life with Alexander.",
+  "story_updates": [
+    "Alexander reveals he was a soldier, explaining his knowledge of medicinal plants and some of his scars.",
+    "Juliana and Alexander share growing warmth, affection, and emotional intimacy as they bond over her mother's herbal book.",
+    "Juliana begins to reframe her loss of wealth, feeling peace and contentment in her rustic life with Alexander."
+  ],
+  "unresolved_storylines": [
+    "What specific non-war experiences contributed to Alexander's scars?",
+    "Will Gerald attempt to follow through on his earlier threats against Juliana and Alexander?"
+  ],
+  "candidate_moments": [
+    {
+      "candidate_id": "EPEpisode 8_C01",
+      "start_segment_id": "E8_S1_023",
+      "end_segment_id": "E8_S1_047",
+      "segment_ids": [
+        "E8_S1_023",
+        "E8_S1_024",
+        "E8_S1_025",
+        "E8_S1_026",
+        "E8_S1_027",
+        "E8_S1_028",
+        "E8_S1_029",
+        "E8_S1_030",
+        "E8_S1_031",
+        "E8_S1_032",
+        "E8_S1_033",
+        "E8_S1_034",
+        "E8_S1_035",
+        "E8_S1_036",
+        "E8_S1_037",
+        "E8_S1_038",
+        "E8_S1_039",
+        "E8_S1_040",
+        "E8_S1_041",
+        "E8_S1_042",
+        "E8_S1_043",
+        "E8_S1_044",
+        "E8_S1_045",
+        "E8_S1_046",
+        "E8_S1_047"
+      ],
+      "hook": "Juliana approaches Alexander to trim his hair and beard, but he firmly stops her mid-motion by catching her wrist.",
+      "cliffhanger": "Alexander casually shares practical herbal knowledge about crushed leaves easing swelling, leaving their unspoken mystery and quiet dynamic hanging in the air.",
+      "standalone_clarity": "A new viewer immediately understands the intimate, slightly protective dynamic between the rugged man and the woman, along with their lighthearted banter.",
+      "narrative_context": "Juliana offers to groom Alexander's wild beard, leading to a playful back-and-forth before they return to studying the botanical book together.",
+      "promotional_strength": "It combines physical intimacy and tension with humorous dynamic banter, showing off both the character chemistry and Alexander's quiet, mysterious nature.",
+      "evidence": [
+        {
+          "segment_id": "E8_S1_027",
+          "timestamp": "00:31.90-00:33.20",
+          "observation": "Alexander catches Juliana's wrist in midair when she tries to trim his hair."
+        },
+        {
+          "segment_id": "E8_S1_037",
+          "timestamp": "00:43.70-00:44.90",
+          "observation": "Alexander drolly defends looking like a forest hermit."
+        }
+      ],
+      "candidate_confidence": 0.85
+    },
+    {
+      "candidate_id": "EPEpisode 8_C02",
+      "start_segment_id": "E8_S1_048",
+      "end_segment_id": "E8_S1_063",
+      "segment_ids": [
+        "E8_S1_048",
+        "E8_S1_049",
+        "E8_S1_050",
+        "E8_S1_051",
+        "E8_S1_052",
+        "E8_S1_053",
+        "E8_S1_054",
+        "E8_S1_055",
+        "E8_S1_056",
+        "E8_S1_057",
+        "E8_S1_058",
+        "E8_S1_059",
+        "E8_S1_060",
+        "E8_S1_061",
+        "E8_S1_062",
+        "E8_S1_063"
+      ],
+      "hook": "Juliana asks Alexander directly about his visible scars and whether they came from war.",
+      "cliffhanger": "Juliana reflects that losing wealth might not mean losing everything, leaving her emotional shift unresolved as the scene fades out.",
+      "standalone_clarity": "Clear baseline context: a woman asks a battle-scarred man about his traumatic past and realizes her own changing perspective on life.",
+      "narrative_context": "Juliana probes into Alexander's painful past and realizes her view on her lost fortune is transforming through her life with him.",
+      "promotional_strength": "Strong emotional resonance and cozy atmosphere that highlights character growth, vulnerable dialogue, and quiet romance.",
+      "evidence": [
+        {
+          "segment_id": "E8_S1_051",
+          "timestamp": "01:00.50-01:02.80",
+          "observation": "Juliana compassionately asks Alexander about his scars."
+        },
+        {
+          "segment_id": "E8_S1_062",
+          "timestamp": "01:13.20-01:15.30",
+          "observation": "Juliana admits she may have been wrong about losing wealth meaning losing everything."
+        }
+      ],
+      "candidate_confidence": 0.88
+    }
+  ]
+}

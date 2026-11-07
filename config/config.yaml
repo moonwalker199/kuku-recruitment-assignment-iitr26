@@ -30,22 +30,26 @@ candidate_generation:
 llm:
   defaults:
     provider: "google"
-    model: "gemini-3.8-flash"
+    model: "gemini-3.5-flash"
+    # model: "gemini-3.8-flash"
     temperature: 0.1
-    max_output_tokens: 512
-    timeout_seconds: 30
+    max_output_tokens: 4096
+    timeout_seconds: 120
     max_retries: 3
     retry_delay_seconds: 2.0
 
-  # Stage 1: Full episode understanding and candidate discovery
   episode_analysis:
+    max_output_tokens: 8192
+    llm_score_threshold: 0.25
+    thinking_level: "LOW"
     llm_score_threshold: 0.25
 
-  # Stage 2: Candidate start/end boundary optimization
-  boundary_optimization: {}
 
-  # Stage 3: Promo quality evaluation and final scoring
-  promo_evaluation: {}
+  boundary_optimization:
+    max_output_tokens: 2048
+
+  promo_evaluation:
+    max_output_tokens: 4096
 
 # ---- Feature Weights -------------------------------------
 feature_weights:

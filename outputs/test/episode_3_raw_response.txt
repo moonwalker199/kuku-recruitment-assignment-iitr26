@@ -1,0 +1,149 @@
+{
+  "episode_number": "Episode 3",
+  "episode_summary": "Following her public betrayal, Lady Juliana is disowned by her noble family and banished from her late mother's chapel by the Noble Matriarch. As guards violently drag Juliana away, an imposing, scarred stranger intervenes, knocks down an armed guard, and offers her a silver wedding ring—dropping to one knee to propose before the shocked congregation.",
+  "story_updates": [
+    "The Noble Matriarch officially banishes Lady Juliana from her family and has her forcibly removed from the chapel.",
+    "Juliana's father remains completely passive and tacitly endorses her banishment.",
+    "An imposing, scarred stranger in a worn coat intervenes physically to defend Juliana from the guards.",
+    "The stranger produces a silver ring and proposes marriage to Lady Juliana in front of her family and the entire congregation."
+  ],
+  "unresolved_storylines": [
+    "Will Lady Juliana accept the mysterious stranger's proposal?",
+    "Who is the imposing, scarred stranger, and what are his motives for intervening and offering marriage to Juliana?",
+    "How will the Matriarch, Gerald, and Juliana's family react if Juliana accepts the stranger's offer?"
+  ],
+  "candidate_moments": [
+    {
+      "candidate_id": "EPEpisode 3_C01",
+      "start_segment_id": "E3_S2_046",
+      "end_segment_id": "E3_S3_081",
+      "segment_ids": [
+        "E3_S2_046",
+        "E3_S2_047",
+        "E3_S2_048",
+        "E3_S2_049",
+        "E3_S2_050",
+        "E3_S2_051",
+        "E3_S2_052",
+        "E3_S2_053",
+        "E3_S2_054",
+        "E3_S3_055",
+        "E3_S3_056",
+        "E3_S3_057",
+        "E3_S3_058",
+        "E3_S3_059",
+        "E3_S3_060",
+        "E3_S3_061",
+        "E3_S3_062",
+        "E3_S3_063",
+        "E3_S3_064",
+        "E3_S3_065",
+        "E3_S3_066",
+        "E3_S3_067",
+        "E3_S3_068",
+        "E3_S3_069",
+        "E3_S3_070",
+        "E3_S3_071",
+        "E3_S3_072",
+        "E3_S3_073",
+        "E3_S3_074",
+        "E3_S3_075",
+        "E3_S3_076",
+        "E3_S3_077",
+        "E3_S3_078",
+        "E3_S3_079",
+        "E3_S3_080",
+        "E3_S3_081"
+      ],
+      "hook": "The Noble Matriarch barks an order for guards to forcibly remove Juliana, creating an immediate physical conflict as guards grab her.",
+      "cliffhanger": "After taking down the guard, the stranger turns to Juliana to check on her safety while fiercely warning the remaining guard not to touch her again.",
+      "standalone_clarity": "A new viewer sees a young noblewoman being dragged out of a church by guards at her family's order, until a mysterious rugged stranger steps in and physically overpowers the guard.",
+      "narrative_context": "Juliana is being cast out of her family's chapel after her ruined wedding when an unknown scarred man steps in to save her from the guards.",
+      "promotional_strength": "Combines intense physical tension and high stakes with a heroic savior reveal, driving high viewer curiosity about the mysterious defender.",
+      "evidence": [
+        {
+          "segment_id": "E3_S2_047",
+          "timestamp": "00:58.30-01:00.00",
+          "observation": "Noble Matriarch orders guards to remove Juliana."
+        },
+        {
+          "segment_id": "E3_S3_059",
+          "timestamp": "01:09.90-01:12.10",
+          "observation": "The Bearded Stranger commands the guards to unhand her."
+        },
+        {
+          "segment_id": "E3_S3_071",
+          "timestamp": "01:24.00-01:25.50",
+          "observation": "The stranger effortlessly drops the armed guard with a single strike."
+        }
+      ],
+      "candidate_confidence": 0.92
+    },
+    {
+      "candidate_id": "EPEpisode 3_C02",
+      "start_segment_id": "E3_S3_088",
+      "end_segment_id": "E3_S3_118",
+      "segment_ids": [
+        "E3_S3_088",
+        "E3_S3_089",
+        "E3_S3_090",
+        "E3_S3_091",
+        "E3_S3_092",
+        "E3_S3_093",
+        "E3_S3_094",
+        "E3_S3_095",
+        "E3_S3_096",
+        "E3_S3_097",
+        "E3_S3_098",
+        "E3_S3_099",
+        "E3_S3_100",
+        "E3_S3_101",
+        "E3_S3_102",
+        "E3_S3_103",
+        "E3_S3_104",
+        "E3_S3_105",
+        "E3_S3_106",
+        "E3_S3_107",
+        "E3_S3_108",
+        "E3_S3_109",
+        "E3_S3_110",
+        "E3_S3_111",
+        "E3_S3_112",
+        "E3_S3_113",
+        "E3_S3_114",
+        "E3_S3_115",
+        "E3_S3_116",
+        "E3_S3_117",
+        "E3_S3_118"
+      ],
+      "hook": "The mysterious stranger stands with Juliana in front of the cathedral window, telling her she shouldn't have to beg to remember her worth.",
+      "cliffhanger": "The stranger drops to one knee offering a silver ring and asks Juliana to accept his hand, leaving the episode on a dramatic cliffhanger as she smiles tearfully.",
+      "standalone_clarity": "Clear emotional narrative where a stranger rescues a woman from public humiliation and unexpectedly proposes to her in front of her shocked family.",
+      "narrative_context": "Following his physical intervention, the stranger offers Juliana the dignity stripped from her by proposing marriage right in front of her ex-fiancé and family.",
+      "promotional_strength": "Extremely strong climax with high emotional payoff, dramatic shock value, and a classic micro-drama romance twist.",
+      "evidence": [
+        {
+          "segment_id": "E3_S3_089",
+          "timestamp": "01:44.20-01:47.40",
+          "observation": "Stranger validates Juliana's dignity."
+        },
+        {
+          "segment_id": "E3_S3_100",
+          "timestamp": "01:59.20-02:01.00",
+          "observation": "Stranger pulls out a polished silver ring."
+        },
+        {
+          "segment_id": "E3_S3_111",
+          "timestamp": "01:12.70-01:15.50",
+          "observation": "Stranger drops to one knee before Juliana."
+        },
+        {
+          "segment_id": "E3_S3_116",
+          "timestamp": "02:17.50-02:20.30",
+          "observation": "Stranger asks Juliana to accept his hand."
+        }
+      ],
+      "candidate_confidence": 0.96
+    }
+  ]
+}

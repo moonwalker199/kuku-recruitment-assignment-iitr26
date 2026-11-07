@@ -1,0 +1,115 @@
+{
+  "episode_number": "Episode 6",
+  "episode_summary": "Juliana and her mysterious new husband arrive at his modest woodland cottage amidst a rainy night. Despite the humble, dilapidated state of the cottage and the grief over her lost life, Juliana begins cleaning and finds an unexpected sense of warmth, peace, and security alongside him by the fireplace.",
+  "story_updates": [
+    "Juliana has left her previous comfortable life behind and moved into a humble woodland cottage with her mysterious new husband.",
+    "Juliana feels a sense of quiet peace and safety with her new husband despite losing her home and family."
+  ],
+  "unresolved_storylines": [
+    "What specific events led to Juliana losing her family and home, and who is her mysterious new husband?"
+  ],
+  "candidate_moments": [
+    {
+      "candidate_id": "EP6_C01",
+      "start_segment_id": "E6_S2_036",
+      "end_segment_id": "E6_S2_064",
+      "segment_ids": [
+        "E6_S2_036",
+        "E6_S2_037",
+        "E6_S2_038",
+        "E6_S2_039",
+        "E6_S2_040",
+        "E6_S2_041",
+        "E6_S2_042",
+        "E6_S2_043",
+        "E6_S2_044",
+        "E6_S2_045",
+        "E6_S2_046",
+        "E6_S2_047",
+        "E6_S2_048",
+        "E6_S2_049",
+        "E6_S2_050",
+        "E6_S2_051",
+        "E6_S2_052",
+        "E6_S2_053",
+        "E6_S2_054",
+        "E6_S2_055",
+        "E6_S2_056",
+        "E6_S2_057",
+        "E6_S2_058",
+        "E6_S2_059",
+        "E6_S2_060",
+        "E6_S2_061",
+        "E6_S2_062",
+        "E6_S2_063",
+        "E6_S2_064"
+      ],
+      "hook": "The husband apologizes sincerely for bringing her to a modest, dim cottage after she came from comfort.",
+      "cliffhanger": "Juliana breaks down while aggressively scrubbing a table, admitting that if she stops moving, she will think about everything she lost.",
+      "standalone_clarity": " clear emotional trajectory showing a woman in a wedding gown confronting a sudden drop in status and processing loss.",
+      "narrative_context": "Inside the cottage, Juliana takes off her cloak and reacts to her new sparse home with unexpected acceptance before her suppressed grief breaks through.",
+      "promotional_strength": "Combines dynamic character interaction, atmospheric visuals, and a poignant emotional outburst that hooks viewer curiosity about her past.",
+      "evidence": [
+        {
+          "segment_id": "E6_S2_037",
+          "timestamp": "00:40.70-00:41.90",
+          "observation": "The husband apologizes for the condition of the home."
+        },
+        {
+          "segment_id": "E6_S2_063",
+          "timestamp": "01:10.10-01:13.20",
+          "observation": "Juliana tearfully admits she cannot stop cleaning or she will think about everything she lost."
+        }
+      ],
+      "candidate_confidence": 0.85
+    },
+    {
+      "candidate_id": "EP6_C02",
+      "start_segment_id": "E6_S2_075",
+      "end_segment_id": "E6_S2_097",
+      "segment_ids": [
+        "E6_S2_075",
+        "E6_S2_076",
+        "E6_S2_077",
+        "E6_S2_078",
+        "E6_S2_079",
+        "E6_S2_080",
+        "E6_S2_081",
+        "E6_S2_082",
+        "E6_S2_083",
+        "E6_S2_084",
+        "E6_S2_085",
+        "E6_S2_086",
+        "E6_S2_087",
+        "E6_S2_088",
+        "E6_S2_089",
+        "E6_S2_090",
+        "E6_S2_091",
+        "E6_S2_092",
+        "E6_S2_093",
+        "E6_S2_094",
+        "E6_S2_095",
+        "E6_S2_096",
+        "E6_S2_097"
+      ],
+      "hook": "Juliana stands illuminated by amber firelight as her husband finishes lighting a warm fire in the hearth.",
+      "cliffhanger": "Juliana reflects via voiceover that despite losing her home, family, and future, sitting with this stranger makes her feel surprisingly safe.",
+      "standalone_clarity": "Completely clear intimate moment highlighting the contrast between tragic background loss and emerging comfort.",
+      "narrative_context": "The climax of the episode where Juliana and her new husband settle beside the fire, establishing the emotional core of their relationship.",
+      "promotional_strength": "Delivers strong thematic resonance, soft romantic intimacy, and intrigue surrounding their marriage.",
+      "evidence": [
+        {
+          "segment_id": "E6_S2_086",
+          "timestamp": "01:38.40-01:40.40",
+          "observation": "Juliana reflects on losing her home and family."
+        },
+        {
+          "segment_id": "E6_S2_094",
+          "timestamp": "01:46.20-01:49.00",
+          "observation": "Juliana realizes she does not feel afraid sitting with her new husband."
+        }
+      ],
+      "candidate_confidence": 0.88
+    }
+  ]
+}

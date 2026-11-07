@@ -1,0 +1,134 @@
+{
+  "episode_number": "Episode 2",
+  "episode_summary": "Gerald completes his public rejection of Juliana at the altar, choosing her sister Clarissa instead. When Juliana appeals to her father, he coldly rejects her and commands her not to disgrace the family further. Clarissa mocks Juliana's appearance and background, and a matriarch tells her to be grateful she's even present. Rather than slinking away as Gerald demands, Juliana stands tall, turning her heartbreak into a fierce public indictment of Gerald's unworthiness and broken word before walking away with her dignity intact.",
+  "story_updates": [
+    "Gerald officially abandons his promise to marry Juliana in order to choose her sister Clarissa for her greater wealth and beauty.",
+    "Juliana's father openly disowns her plight, ordering her to accept Gerald's decision so as not to disgrace the family.",
+    "Juliana transforms from a weeping victim into a defiant figure, calling out Gerald's lack of honor in front of the entire congregation."
+  ],
+  "unresolved_storylines": [
+    "How will Juliana navigate her life now that both her betrothed and her father/family have publicly rejected her?",
+    "Will Gerald and Clarissa's wedding proceed smoothly after Juliana's sharp public indictment of Gerald's character?",
+    "What role will Juliana's mother's legacy (apothecary herbs) play in her future?"
+  ],
+  "candidate_moments": [
+    {
+      "candidate_id": "EP2_C01",
+      "start_segment_id": "E2_S1_051",
+      "end_segment_id": "E2_S1_074",
+      "segment_ids": [
+        "E2_S1_051",
+        "E2_S1_052",
+        "E2_S1_053",
+        "E2_S1_054",
+        "E2_S1_055",
+        "E2_S1_056",
+        "E2_S1_057",
+        "E2_S1_058",
+        "E2_S1_059",
+        "E2_S1_060",
+        "E2_S1_061",
+        "E2_S1_062",
+        "E2_S1_063",
+        "E2_S1_064",
+        "E2_S1_065",
+        "E2_S1_066",
+        "E2_S1_067",
+        "E2_S1_068",
+        "E2_S1_069",
+        "E2_S1_070",
+        "E2_S1_071",
+        "E2_S1_072",
+        "E2_S1_073",
+        "E2_S1_074"
+      ],
+      "hook": "Gerald dismissively tells Juliana to go home quietly, but she turns around with a defiant smile and challenges his command.",
+      "cliffhanger": "Juliana finishes her powerful speech declaring she will not leave ashamed, leaving Gerald stunned and the audience wondering what she will do next.",
+      "standalone_clarity": "A new viewer immediately understands that a groom has jilted his bride at the altar, but the bride turns the tables by delivering a dignified, sharp speech tearing down his honor.",
+      "narrative_context": "After being publicly dumped and mocked, Juliana refuses Gerald's demand to slink away quietly, reclaiming her pride in front of the wedding guests.",
+      "promotional_strength": "Features a strong character arc within a 40-second beat: transforming a humiliating rejection into a triumphant moment of standing up for oneself.",
+      "evidence": [
+        {
+          "segment_id": "E2_S1_052",
+          "timestamp": "01:09.40-01:12.70",
+          "observation": "Gerald orders Juliana to go home quietly and leave with dignity."
+        },
+        {
+          "segment_id": "E2_S1_054",
+          "timestamp": "01:14.20-01:16.50",
+          "observation": "Juliana responds with a steely, defiant smile."
+        },
+        {
+          "segment_id": "E2_S1_067",
+          "timestamp": "01:33.40-01:36.60",
+          "observation": "Juliana tells Gerald he has shown the chapel exactly what his word is worth."
+        },
+        {
+          "segment_id": "E2_S1_073",
+          "timestamp": "01:43.00-01:47.40",
+          "observation": "Juliana proudly declares she will not leave believing she should be ashamed."
+        }
+      ],
+      "candidate_confidence": 0.95
+    },
+    {
+      "candidate_id": "EP2_C02",
+      "start_segment_id": "E2_S1_022",
+      "end_segment_id": "E2_S1_045",
+      "segment_ids": [
+        "E2_S1_022",
+        "E2_S1_023",
+        "E2_S1_024",
+        "E2_S1_025",
+        "E2_S1_026",
+        "E2_S1_027",
+        "E2_S1_028",
+        "E2_S1_029",
+        "E2_S1_030",
+        "E2_S1_031",
+        "E2_S1_032",
+        "E2_S1_033",
+        "E2_S1_034",
+        "E2_S1_035",
+        "E2_S1_036",
+        "E2_S1_037",
+        "E2_S1_038",
+        "E2_S1_039",
+        "E2_S1_040",
+        "E2_S1_041",
+        "E2_S1_042",
+        "E2_S1_043",
+        "E2_S1_044",
+        "E2_S1_045"
+      ],
+      "hook": "Juliana pleads with her father to stop her altar humiliation, only for her father to coldly command her to accept Gerald's choice.",
+      "cliffhanger": "Clarissa viciously mocks Juliana's mother's memory while Juliana's tearful expression begins to harden into indignation.",
+      "standalone_clarity": "Clear dynamic showing family betrayal: her father refuses to support her, and her rival sister cruel mocks her appearance and background.",
+      "narrative_context": "Juliana turns to her family for protection after Gerald's rejection, but discovers her father and sister are aligned against her.",
+      "promotional_strength": "Delivers intense emotional conflict and betrayals from multiple angles (father and sister), setting up Juliana's turning point.",
+      "evidence": [
+        {
+          "segment_id": "E2_S1_026",
+          "timestamp": "00:34.30-00:37.10",
+          "observation": "Juliana begs her father not to let Gerald humiliate her."
+        },
+        {
+          "segment_id": "E2_S1_028",
+          "timestamp": "00:37.50-00:42.30",
+          "observation": "Her father coldly tells her to accept Gerald's choice."
+        },
+        {
+          "segment_id": "E2_S1_038",
+          "timestamp": "00:53.50-00:56.70",
+          "observation": "Clarissa taunts Juliana, telling her she looks like a kitchen maid."
+        },
+        {
+          "segment_id": "E2_S1_045",
+          "timestamp": "01:00.60-01:03.50",
+          "observation": "Clarissa insults Juliana's mother and her apothecary background."
+        }
+      ],
+      "candidate_confidence": 0.85
+    }
+  ]
+}

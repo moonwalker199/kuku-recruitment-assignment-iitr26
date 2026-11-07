@@ -33,16 +33,29 @@ logger = logging.getLogger(__name__)
 # LLM configuration
 # ---------------------------------------------------------------------------
 
+# @dataclass
+# class LLMConfig:
+#     provider: str = "google"
+#     model: str = "gemini-3.8-flash"
+#     temperature: float = 0.1
+#     max_output_tokens: int = 4096
+#     timeout_seconds: float = 120.0
+#     max_retries: int = 3
+#     retry_delay_seconds: float = 2.0
+#     llm_score_threshold: float = 0.25
+
+
 @dataclass
 class LLMConfig:
     provider: str = "google"
-    model: str = "gemini-3.8-flash"
+    model: str = "gemini-3.5-flash"
     temperature: float = 0.1
     max_output_tokens: int = 4096
     timeout_seconds: float = 120.0
     max_retries: int = 3
     retry_delay_seconds: float = 2.0
     llm_score_threshold: float = 0.25
+    thinking_level: str | None = None
 
 
 @dataclass
@@ -285,6 +298,7 @@ def _get_nested(
     return current
 
 
+
 def _build_llm_config(
     raw: dict | None,
     defaults: dict | None = None,
@@ -306,28 +320,22 @@ def _build_llm_config(
 
     return LLMConfig(
         provider=str(merged.get("provider", "google")),
-        model=str(
-            merged.get("model", "gemini-3.8-flash")
-        ),
-        temperature=float(
-            merged.get("temperature", 0.1)
-        ),
-        max_output_tokens=int(
-            merged.get("max_output_tokens", 4096)
-        ),
-        timeout_seconds=float(
-            merged.get("timeout_seconds", 120.0)
-        ),
-        max_retries=int(
-            merged.get("max_retries", 3)
-        ),
-        retry_delay_seconds=float(
-            merged.get("retry_delay_seconds", 2.0)
-        ),
-        llm_score_threshold=float(
-            merged.get("llm_score_threshold", 0.25)
+        model=str(merged.get("model", "gemini-3.5-flash")),
+        temperature=float(merged.get("temperature", 0.1)),
+        max_output_tokens=int(merged.get("max_output_tokens", 4096)),
+        timeout_seconds=float(merged.get("timeout_seconds", 120.0)),
+        max_retries=int(merged.get("max_retries", 3)),
+        retry_delay_seconds=float(merged.get("retry_delay_seconds", 2.0)),
+        llm_score_threshold=float(merged.get("llm_score_threshold", 0.25)),
+        thinking_level=(
+            str(merged["thinking_level"])
+            if merged.get("thinking_level") is not None
+            else None
         ),
     )
+
+
+
 
 
 # ---------------------------------------------------------------------------

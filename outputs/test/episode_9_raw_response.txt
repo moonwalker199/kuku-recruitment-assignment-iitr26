@@ -1,0 +1,168 @@
+{
+  "episode_number": "Episode 9",
+  "episode_summary": "A frantic peasant mother arrives at the woodland cottage with her feverish son, and Juliana successfully cures him using her late mother's herbal remedies. Despite Alexander's warning that word of this miracle will draw dangerous attention, Juliana insists on helping. Meanwhile, news reaches a Blond Nobleman about a war veteran whose scar resembles the late Duke's, striking paranoia and fear into the nobleman.",
+  "story_updates": [
+    "Juliana successfully uses her herbal knowledge to cure a peasant child's critical fever, earning the village's deep gratitude.",
+    "Alexander warns Juliana against gaining public attention, highlighting the danger of rumors.",
+    "A Blond Nobleman hears rumors of a war veteran possessing the same scar as the late Duke, causing him visible panic and dread."
+  ],
+  "unresolved_storylines": [
+    "Will the mother's promise to tell the village about Juliana bring dangerous attention to the cottage?",
+    "Is Alexander actually the late Duke, and how will the Blond Nobleman react once he investigates the rumors?"
+  ],
+  "candidate_moments": [
+    {
+      "candidate_id": "EP9_C01",
+      "start_segment_id": "E9_S1_001",
+      "end_segment_id": "E9_S1_018",
+      "segment_ids": [
+        "E9_S1_001",
+        "E9_S1_002",
+        "E9_S1_003",
+        "E9_S1_004",
+        "E9_S1_005",
+        "E9_S1_006",
+        "E9_S1_007",
+        "E9_S1_008",
+        "E9_S1_009",
+        "E9_S1_010",
+        "E9_S1_011",
+        "E9_S1_012",
+        "E9_S1_013",
+        "E9_S1_014",
+        "E9_S1_015",
+        "E9_S1_016",
+        "E9_S1_017",
+        "E9_S1_018"
+      ],
+      "hook": "A quiet herbalist scene is suddenly interrupted by heavy, frantic pounding on the cottage door in the rain.",
+      "cliffhanger": "The child is in critical condition having not eaten since sunset, leaving viewers anxious to see if Juliana can help him.",
+      "standalone_clarity": "Very clear. A distressed mother brings a sick child to a rustic cottage looking for an herbalist's help.",
+      "narrative_context": "The peaceful evening in the cottage is broken when a mother brings her feverish child for urgent medical help.",
+      "promotional_strength": "High stakes and immediate tension from the sudden knocking and desperate plea of the mother establish a strong narrative hook.",
+      "evidence": [
+        {
+          "segment_id": "E9_S1_003",
+          "timestamp": "00:02.00-00:03.50",
+          "observation": "Heavy, frantic pounding sounds at the cottage door."
+        },
+        {
+          "segment_id": "E9_S1_009",
+          "timestamp": "00:06.30-00:11.10",
+          "observation": "Peasant mother desperately begs for help for her feverish boy."
+        }
+      ],
+      "candidate_confidence": 0.85
+    },
+    {
+      "candidate_id": "EP9_C02",
+      "start_segment_id": "E9_S1_040",
+      "end_segment_id": "E9_S1_065",
+      "segment_ids": [
+        "E9_S1_040",
+        "E9_S1_041",
+        "E9_S1_042",
+        "E9_S1_043",
+        "E9_S1_044",
+        "E9_S1_045",
+        "E9_S1_046",
+        "E9_S1_047",
+        "E9_S1_048",
+        "E9_S1_049",
+        "E9_S1_050",
+        "E9_S1_051",
+        "E9_S1_052",
+        "E9_S1_053",
+        "E9_S1_054",
+        "E9_S1_055",
+        "E9_S1_056",
+        "E9_S1_057",
+        "E9_S1_058",
+        "E9_S1_059",
+        "E9_S1_060",
+        "E9_S1_061",
+        "E9_S1_062",
+        "E9_S1_063",
+        "E9_S1_064",
+        "E9_S1_065"
+      ],
+      "hook": "A desperate mother cries out, asking why the medicine isn't working on her dying son.",
+      "cliffhanger": "Juliana and Alexander agree to face the dangerous consequences of village gossip together.",
+      "standalone_clarity": "Easy to follow; shows the miraculous recovery of a child followed by a ominous debate about the dangers of local gossip.",
+      "narrative_context": "Juliana cures the child, but the mother's vow to spread the story prompts a serious warning from Alexander.",
+      "promotional_strength": "Delivers an emotional payoff with the child's fever breaking, immediately followed by narrative friction regarding the threat of exposure.",
+      "evidence": [
+        {
+          "segment_id": "E9_S1_047",
+          "timestamp": "00:58.80-01:01.80",
+          "observation": "Mother realizes her child's fever has broken."
+        },
+        {
+          "segment_id": "E9_S1_059",
+          "timestamp": "01:15.10-01:17.50",
+          "observation": "Alexander warns Juliana about letting rumors spread."
+        },
+        {
+          "segment_id": "E9_S1_065",
+          "timestamp": "01:22.00-01:23.80",
+          "observation": "Juliana asserts they will face any consequences together."
+        }
+      ],
+      "candidate_confidence": 0.9
+    },
+    {
+      "candidate_id": "EP9_C03",
+      "start_segment_id": "E9_S2_066",
+      "end_segment_id": "E9_S2_089",
+      "segment_ids": [
+        "E9_S2_066",
+        "E9_S2_067",
+        "E9_S2_068",
+        "E9_S2_069",
+        "E9_S2_070",
+        "E9_S2_071",
+        "E9_S2_072",
+        "E9_S2_073",
+        "E9_S2_074",
+        "E9_S2_075",
+        "E9_S2_076",
+        "E9_S2_077",
+        "E9_S2_078",
+        "E9_S2_079",
+        "E9_S2_080",
+        "E9_S2_081",
+        "E9_S2_082",
+        "E9_S2_083",
+        "E9_S2_084",
+        "E9_S2_085",
+        "E9_S2_086",
+        "E9_S2_087",
+        "E9_S2_088",
+        "E9_S2_089"
+      ],
+      "hook": "A damp groom enters an opulent gothic study to bring news of a unsettling rumor to a nobleman.",
+      "cliffhanger": "The Blond Nobleman stares into the fire in extreme close-up, paralyzed with fear and whispering 'Impossible.'",
+      "standalone_clarity": "Clear intrigue regarding missing/deceased nobility and a mysterious war veteran with a distinct scar.",
+      "narrative_context": "The Blond Nobleman learns about a rumor regarding a war veteran who shares a distinct scar with the late Duke, unsettling him deeply.",
+      "promotional_strength": "High intrigue and mystery segment that introduces major plot stakes and strong dramatic tension.",
+      "evidence": [
+        {
+          "segment_id": "E9_S2_075",
+          "timestamp": "01:32.10-01:35.10",
+          "observation": "The groom mentions a war veteran who resembles the late Duke."
+        },
+        {
+          "segment_id": "E9_S2_079",
+          "timestamp": "01:37.50-01:41.20",
+          "observation": "The groom specifies the man carries the Duke's war scar."
+        },
+        {
+          "segment_id": "E9_S2_089",
+          "timestamp": "01:52.00-01:55.50",
+          "observation": "Close-up on the nobleman's eye reflecting flames in utter dread."
+        }
+      ],
+      "candidate_confidence": 0.92
+    }
+  ]
+}

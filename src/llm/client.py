@@ -1,24 +1,15 @@
 
 """
-src/llm/client.py
-
 Provider-independent LLM API client with retries and graceful fallback.
 
-Supports:
-  - Google Gemini via google-genai
-  - OpenAI via openai
-
-Supports independent configuration for:
-  - episode_analysis
-  - boundary_optimization
-  - promo_evaluation
-
-API keys are loaded from environment variables.
-Keys are never logged or written to output files.
+Supports Google Gemini via google-genai and OpenAI via openai.
+Supports independent episode_analysis, boundary_optimization,
+and promo_evaluation configurations.
 """
 
 from __future__ import annotations
 
+import re
 import json
 import logging
 import os
@@ -27,10 +18,6 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
-# ---------------------------------------------------------------------------
-# Optional provider imports
-# ---------------------------------------------------------------------------
 
 try:
     from google import genai as _genai
@@ -50,27 +37,15 @@ except ImportError:
     _OPENAI_AVAILABLE = False
 
 
-# ---------------------------------------------------------------------------
-# Exceptions
-# ---------------------------------------------------------------------------
-
 class LLMUnavailable(Exception):
     """Raised when the LLM cannot be initialised."""
 
-
-# ---------------------------------------------------------------------------
-# Base interface
-# ---------------------------------------------------------------------------
 
 class _BaseClient:
 
     def call(self, prompt: str) -> str | None:
         raise NotImplementedError
 
-
-# ---------------------------------------------------------------------------
-# Google Gemini client
-# ---------------------------------------------------------------------------
 
 class _GeminiClient(_BaseClient):
 
@@ -82,6 +57,7 @@ class _GeminiClient(_BaseClient):
         timeout: float,
         max_retries: int,
         retry_delay: float,
+        thinking_level: str | None = None,
     ) -> None:
 
         if not _GENAI_AVAILABLE:
@@ -106,6 +82,7 @@ class _GeminiClient(_BaseClient):
         self._max_tokens = max_tokens
         self._max_retries = max_retries
         self._retry_delay = retry_delay
+        self._thinking_level = thinking_level
 
         try:
             self._client = _genai.Client(
@@ -119,35 +96,116 @@ class _GeminiClient(_BaseClient):
                 f"Could not initialise Google Gemini client: {exc}"
             ) from exc
 
-        logger.info(
-            "Gemini client initialised (model=%s).",
-            model,
-        )
+        logger.info("Gemini client initialised (model=%s).", model)
 
     def call(self, prompt: str) -> str | None:
 
         for attempt in range(1, self._max_retries + 1):
 
             try:
+                # response = self._client.models.generate_content(
+                #     model=self._model,
+                #     contents=prompt,
+                #     config=_genai_types.GenerateContentConfig(
+                #         temperature=self._temperature,
+                #         max_output_tokens=self._max_tokens,
+                #         response_mime_type="application/json",
+                #     ),
+                # )
+
+                config_kwargs = {
+                    "temperature": self._temperature,
+                    "max_output_tokens": self._max_tokens,
+                    "response_mime_type": "application/json",
+                }
+
+                if self._thinking_level:
+                    config_kwargs["thinking_config"] = (
+                        _genai_types.ThinkingConfig(
+                            thinking_level=self._thinking_level
+                        )
+                    )
+
                 response = self._client.models.generate_content(
                     model=self._model,
                     contents=prompt,
                     config=_genai_types.GenerateContentConfig(
-                        temperature=self._temperature,
-                        max_output_tokens=self._max_tokens,
+                        **config_kwargs
                     ),
                 )
+
+                candidates = getattr(response, "candidates", None)
+
+                if candidates:
+                    finish_reason = getattr(
+                        candidates[0], "finish_reason", None
+                    )
+                    logger.info(
+                        "Gemini finish reason: %s",
+                        finish_reason,
+                    )
+
+                usage = getattr(response, "usage_metadata", None)
+
+                # if usage:
+                #     logger.info(
+                #         "Gemini token usage: prompt=%s, response=%s, total=%s",
+                #         getattr(usage, "prompt_token_count", None),
+                #         getattr(usage, "candidates_token_count", None),
+                #         getattr(usage, "total_token_count", None),
+                #     )
+                if usage:
+                    logger.info(
+                        "Gemini token usage: prompt=%s, response=%s, "
+                        "thinking=%s, total=%s",
+                        getattr(usage, "prompt_token_count", None),
+                        getattr(usage, "candidates_token_count", None),
+                        getattr(usage, "thoughts_token_count", None),
+                        getattr(usage, "total_token_count", None),
+                    )
 
                 text = response.text
 
                 if not text:
                     logger.error(
-                        "Gemini returned an empty text response."
+                        "Gemini returned an empty response. "
+                        "Finish reason: %s",
+                        finish_reason if candidates else "unknown",
                     )
                     return None
 
-                return text
+                return text.strip()
 
+            # except Exception as exc:
+
+            #     err_str = str(exc).lower()
+
+            #     if (
+            #         attempt < self._max_retries
+            #         and _is_transient(err_str)
+            #     ):
+            #         delay = self._retry_delay * (
+            #             2 ** (attempt - 1)
+            #         )
+
+            #         logger.warning(
+            #             "Gemini request failed "
+            #             "(attempt %d/%d). Retrying in %.1fs. Error: %s",
+            #             attempt,
+            #             self._max_retries,
+            #             delay,
+            #             exc,
+            #         )
+
+            #         time.sleep(delay)
+
+            #     else:
+            #         logger.error(
+            #             "Gemini request failed after %d attempt(s): %s",
+            #             attempt,
+            #             exc,
+            #         )
+            #         return None
             except Exception as exc:
 
                 err_str = str(exc).lower()
@@ -156,8 +214,10 @@ class _GeminiClient(_BaseClient):
                     attempt < self._max_retries
                     and _is_transient(err_str)
                 ):
-                    delay = self._retry_delay * (
-                        2 ** (attempt - 1)
+                    delay = _get_retry_delay(
+                        exc,
+                        self._retry_delay,
+                        attempt,
                     )
 
                     logger.warning(
@@ -181,10 +241,6 @@ class _GeminiClient(_BaseClient):
 
         return None
 
-
-# ---------------------------------------------------------------------------
-# OpenAI client
-# ---------------------------------------------------------------------------
 
 class _OpenAIClient(_BaseClient):
 
@@ -222,10 +278,7 @@ class _OpenAIClient(_BaseClient):
         self._max_retries = max_retries
         self._retry_delay = retry_delay
 
-        logger.info(
-            "OpenAI client initialised (model=%s).",
-            model,
-        )
+        logger.info("OpenAI client initialised (model=%s).", model)
 
     def call(self, prompt: str) -> str | None:
 
@@ -255,7 +308,11 @@ class _OpenAIClient(_BaseClient):
 
                 content = response.choices[0].message.content
 
-                return content
+                if not content:
+                    logger.error("OpenAI returned an empty response.")
+                    return None
+
+                return content.strip()
 
             except Exception as exc:
 
@@ -291,27 +348,8 @@ class _OpenAIClient(_BaseClient):
         return None
 
 
-# ---------------------------------------------------------------------------
-# Factory and public interface
-# ---------------------------------------------------------------------------
-
 class LLMClient:
-    """
-    Provider-independent LLM wrapper.
-
-    Usage:
-        # Backward-compatible default
-        client = LLMClient.from_config(cfg)
-
-        # Explicit stage configuration
-        client = LLMClient.from_config(
-            cfg,
-            stage="episode_analysis",
-        )
-
-        raw = client.call(prompt)
-        parsed = client.call_json(prompt)
-    """
+    """Provider-independent LLM wrapper."""
 
     VALID_STAGES = (
         "episode_analysis",
@@ -338,12 +376,6 @@ class LLMClient:
         cfg,
         stage: str | None = None,
     ) -> "LLMClient":
-        """
-        Build a client using the requested stage configuration.
-
-        If stage is omitted, episode_analysis is used.
-        Older configurations exposing only cfg.llm remain supported.
-        """
 
         selected_stage = stage or "episode_analysis"
 
@@ -353,11 +385,9 @@ class LLMClient:
                 f"Valid stages: {', '.join(cls.VALID_STAGES)}"
             )
 
-        # Prefer the stage-aware configuration interface.
         if hasattr(cfg, "get_llm_config"):
             llm = cfg.get_llm_config(selected_stage)
         else:
-            # Backward compatibility with older Config objects.
             llm = cfg.llm
 
         kwargs = {
@@ -370,7 +400,11 @@ class LLMClient:
         }
 
         if llm.provider == "google":
-            inner = _GeminiClient(**kwargs)
+            inner = _GeminiClient(
+                **kwargs,
+                thinking_level=getattr(llm, "thinking_level", None),
+            )
+
 
         elif llm.provider == "openai":
             inner = _OpenAIClient(**kwargs)
@@ -395,12 +429,9 @@ class LLMClient:
         )
 
     def call(self, prompt: str) -> str | None:
-        """Send a prompt and return raw response text."""
         return self._inner.call(prompt)
 
     def call_json(self, prompt: str) -> dict | None:
-        """Send a prompt and parse a JSON object response."""
-
         raw = self.call(prompt)
 
         if raw is None:
@@ -408,10 +439,6 @@ class LLMClient:
 
         return _parse_json_response(raw)
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 _TRANSIENT_INDICATORS = (
     "429",
@@ -429,7 +456,46 @@ _TRANSIENT_INDICATORS = (
 )
 
 
+def _get_retry_delay(exc: Exception, fallback: float, attempt: int) -> float:
+    """Extract Google's suggested retry delay, or use exponential backoff."""
+
+    error_text = str(exc).lower()
+
+    patterns = [
+        r"retry in\s+(\d+(?:\.\d+)?)\s*s",
+        r"retry_delay\s*\{\s*seconds:\s*(\d+)",
+        r"retrydelay.*?(\d+(?:\.\d+)?)\s*s",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, error_text, re.DOTALL)
+
+        if match:
+            return max(float(match.group(1)), 1.0)
+
+    # Rate limits need a longer fallback than ordinary transient errors.
+    if "429" in error_text or "resource_exhausted" in error_text:
+        return max(30.0, fallback * (2 ** (attempt - 1)))
+
+    return fallback * (2 ** (attempt - 1))
+
 def _is_transient(error_str: str) -> bool:
+    error_str = error_str.lower()
+
+    # Daily quota exhaustion cannot be resolved by short retries.
+    permanent_quota_indicators = (
+        "per day limit exceeded",
+        "requests per day limit exceeded",
+        "generate_content_free_tier_requests",
+        "generaterequestsperday",
+    )
+
+    if any(
+        indicator in error_str
+        for indicator in permanent_quota_indicators
+    ):
+        return False
+
     return any(
         indicator in error_str
         for indicator in _TRANSIENT_INDICATORS
@@ -437,7 +503,7 @@ def _is_transient(error_str: str) -> bool:
 
 
 def _parse_json_response(text: str) -> dict | None:
-    """Extract a JSON object from a model response."""
+    """Parse a JSON object without accepting arbitrary trailing text."""
 
     text = text.strip()
 
@@ -454,20 +520,19 @@ def _parse_json_response(text: str) -> dict | None:
     try:
         result = json.loads(text)
 
-        if not isinstance(result, dict):
-            logger.warning(
-                "LLM returned JSON but not a dictionary."
-            )
-            return None
-
-        return result
-
     except json.JSONDecodeError as exc:
         logger.warning(
             "LLM response is not valid JSON: %s",
             exc,
         )
+        logger.debug(
+            "Invalid LLM response preview: %r",
+            text[:1000],
+        )
         return None
 
+    if not isinstance(result, dict):
+        logger.warning("LLM returned JSON but not a dictionary.")
+        return None
 
-
+    return result

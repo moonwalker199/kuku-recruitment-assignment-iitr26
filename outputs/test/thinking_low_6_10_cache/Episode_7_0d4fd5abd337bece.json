@@ -1,0 +1,133 @@
+{
+  "episode_number": "Episode 7",
+  "episode_summary": "Gerald and an aristocratic woman arrive at Juliana's woodland cottage to mock her reduced lifestyle. Juliana maintains her dignity and stands her ground against Gerald's threats. Juliana's husband returns quietly from the forest carrying firewood, and his silent, imposing presence terrifies Gerald into fleeing with his companion. Juliana expresses amusement and gratitude to her husband, who reassures her with gentle confidence.",
+  "story_updates": [
+    "Gerald and an aristocratic companion confronted Juliana at her cottage to mock her lost status.",
+    "Juliana firmly rejected Gerald's insults, declaring her pride in her work and her loyalty to her new husband over Gerald.",
+    "Juliana's husband intimidated Gerald into retreating without speaking a single word, demonstrating his physical presence and protective nature."
+  ],
+  "unresolved_storylines": [
+    "What is the exact history between Juliana, Gerald, and her new husband?",
+    "Will Gerald follow through on his threat to use his influence to make Juliana's husband disappear?"
+  ],
+  "candidate_moments": [
+    {
+      "candidate_id": "EPEpisode 7_C01",
+      "start_segment_id": "E7_S1_025",
+      "end_segment_id": "E7_S3_047",
+      "segment_ids": [
+        "E7_S1_025",
+        "E7_S1_026",
+        "E7_S1_027",
+        "E7_S1_028",
+        "E7_S1_029",
+        "E7_S1_030",
+        "E7_S1_031",
+        "E7_S1_032",
+        "E7_S1_033",
+        "E7_S2_034",
+        "E7_S2_035",
+        "E7_S2_036",
+        "E7_S2_037",
+        "E7_S3_038",
+        "E7_S3_039",
+        "E7_S3_040",
+        "E7_S3_041",
+        "E7_S3_042",
+        "E7_S3_043",
+        "E7_S3_044",
+        "E7_S3_045",
+        "E7_S3_046",
+        "E7_S3_047"
+      ],
+      "hook": "Gerald insults Juliana for choosing a 'scarred beggar', leading to an intense face-off before a shadowed figure approaches through the fog.",
+      "cliffhanger": "Gerald panics and hastily declares they are leaving after being silently intimidated by Juliana's husband.",
+      "standalone_clarity": "Clear conflict between an arrogant aristocratic man and a determined woman, resolved by the physical arrival of her imposing husband.",
+      "narrative_context": "Gerald threatens Juliana and her husband, only for her husband to return from the woods and intimidate Gerald into a hasty retreat without uttering a word.",
+      "promotional_strength": "Features strong vocal confrontation that smoothly pivots into a high-tension visual payoff when the imposing husband arrives.",
+      "evidence": [
+        {
+          "segment_id": "E7_S1_026",
+          "timestamp": "00:51.50-00:54.60",
+          "observation": "Gerald insults Juliana's choice of husband."
+        },
+        {
+          "segment_id": "E7_S1_032",
+          "timestamp": "01:05.60-01:08.50",
+          "observation": "Gerald threatens to make Juliana's husband disappear."
+        },
+        {
+          "segment_id": "E7_S3_041",
+          "timestamp": "01:21.00-01:23.50",
+          "observation": "Juliana's husband towers over Gerald in silent confrontation."
+        },
+        {
+          "segment_id": "E7_S3_047",
+          "timestamp": "01:30.10-01:31.40",
+          "observation": "Gerald retreats in fear."
+        }
+      ],
+      "candidate_confidence": 0.95
+    },
+    {
+      "candidate_id": "EPEpisode 7_C02",
+      "start_segment_id": "E7_S2_034",
+      "end_segment_id": "E7_S3_058",
+      "segment_ids": [
+        "E7_S2_034",
+        "E7_S2_035",
+        "E7_S2_036",
+        "E7_S2_037",
+        "E7_S3_038",
+        "E7_S3_039",
+        "E7_S3_040",
+        "E7_S3_041",
+        "E7_S3_042",
+        "E7_S3_043",
+        "E7_S3_044",
+        "E7_S3_045",
+        "E7_S3_046",
+        "E7_S3_047",
+        "E7_S3_048",
+        "E7_S3_049",
+        "E7_S3_050",
+        "E7_S3_051",
+        "E7_S3_052",
+        "E7_S3_053",
+        "E7_S3_054",
+        "E7_S3_055",
+        "E7_S3_056",
+        "E7_S3_057",
+        "E7_S3_058"
+      ],
+      "hook": "A mysterious, towering figure emerges from the dark fog while Gerald snarls 'Where is that beggar husband?'",
+      "cliffhanger": "Juliana smiles radiantly at her husband as he carries the firewood inside, leaving viewers curious about their bond and backdrop.",
+      "standalone_clarity": "Easy to follow visually: a bully is silenced by an imposing protector, followed by a warm moment between husband and wife.",
+      "narrative_context": "Juliana's husband returns home to find bullies harassing his wife, silently forces them to flee, and shares a quiet moment of connection with Juliana.",
+      "promotional_strength": "Delivers a satisfying visual payoff of silent strength defeating arrogant antagonists, ending on a warm romantic note.",
+      "evidence": [
+        {
+          "segment_id": "E7_S2_034",
+          "timestamp": "01:09.50-01:14.00",
+          "observation": "A towering figure walks through fog toward the cottage."
+        },
+        {
+          "segment_id": "E7_S3_042",
+          "timestamp": "01:21.50-01:24.00",
+          "observation": "Gerald freezes in cold dread upon seeing the husband."
+        },
+        {
+          "segment_id": "E7_S3_054",
+          "timestamp": "01:40.80-01:43.20",
+          "observation": "Juliana notes amusedly that her husband didn't say a word."
+        },
+        {
+          "segment_id": "E7_S3_056",
+          "timestamp": "01:46.00-01:47.80",
+          "observation": "The husband replies gently that he didn't need to."
+        }
+      ],
+      "candidate_confidence": 0.9
+    }
+  ]
+}

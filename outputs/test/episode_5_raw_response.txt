@@ -1,0 +1,136 @@
+{
+  "episode_number": "Episode 5",
+  "episode_summary": "Lord Ashcroft formally disowns Juliana and revokes her inheritance as she leaves the cathedral with her new husband. Lady Ashcroft violently snatches the heirloom ledger belonging to Juliana's late mother and throws it into the wet courtyard mud. As Gerald and Clarissa mock Juliana kneeling in tears, her new husband steps in, retrieves the book, comforts her, and sternly warns Gerald before guiding Juliana away from her family into the rain.",
+  "story_updates": [
+    "Lord Ashcroft formally disowned Juliana, stripping her of the Ashcroft name, dowry, and inheritance.",
+    "Lady Ashcroft threw Juliana's late mother's ledger into the wet courtyard mud, but Juliana's new husband retrieved it for her.",
+    "Juliana's new husband stood up to Gerald's taunts and led Juliana away from her family."
+  ],
+  "unresolved_storylines": [
+    "What kind of life will Juliana have with her new husband now that she is disowned and penniless?",
+    "Who is the Mysterious Bearded Man, and how will he defend Juliana against her family in the future?"
+  ],
+  "candidate_moments": [
+    {
+      "candidate_id": "EPEpisode 5_C01",
+      "start_segment_id": "E5_S1_006",
+      "end_segment_id": "E5_S1_036",
+      "segment_ids": [
+        "E5_S1_006",
+        "E5_S1_007",
+        "E5_S1_008",
+        "E5_S1_009",
+        "E5_S1_010",
+        "E5_S1_011",
+        "E5_S1_012",
+        "E5_S1_013",
+        "E5_S1_014",
+        "E5_S1_015",
+        "E5_S1_016",
+        "E5_S1_017",
+        "E5_S1_018",
+        "E5_S1_019",
+        "E5_S1_020",
+        "E5_S1_021",
+        "E5_S1_022",
+        "E5_S1_023",
+        "E5_S1_024",
+        "E5_S1_025",
+        "E5_S1_026",
+        "E5_S1_027",
+        "E5_S1_028",
+        "E5_S1_029",
+        "E5_S1_030",
+        "E5_S1_031",
+        "E5_S1_032",
+        "E5_S1_033",
+        "E5_S1_034",
+        "E5_S1_035",
+        "E5_S1_036"
+      ],
+      "hook": "Lord Ashcroft confrontation begins with a harsh declaration that Juliana will not leave carrying the Ashcroft name.",
+      "cliffhanger": "Lady Ashcroft violently flings Juliana's late mother's ledger into the muddy puddle while Clarissa laughs mockingly.",
+      "standalone_clarity": "A new viewer immediately understands that Juliana is being disowned by her cold father and stepmother, suffering severe public rejection and loss of her mother's memory.",
+      "narrative_context": "Juliana is confronted on the church steps by her father and stepmother, who disown her and strip her of her inheritance before throwing her mother's legacy into the dirt.",
+      "promotional_strength": "Features intense family conflict, emotional betrayal, high stakes disinheritance, and a shocking act of cruelty when the ledger is thrown into the mud.",
+      "evidence": [
+        {
+          "segment_id": "E5_S1_007",
+          "timestamp": "00:06.80-00:10.40",
+          "observation": "Lord Ashcroft states Juliana will not leave carrying the Ashcroft name."
+        },
+        {
+          "segment_id": "E5_S1_015",
+          "timestamp": "00:23.10-00:25.10",
+          "observation": "Lord Ashcroft revokes Juliana's inheritance and dowry."
+        },
+        {
+          "segment_id": "E5_S1_032",
+          "timestamp": "00:54.50-00:57.50",
+          "observation": "Lady Ashcroft snatches the heavy book and flings it disdainfully into the wet courtyard."
+        }
+      ],
+      "candidate_confidence": 0.92
+    },
+    {
+      "candidate_id": "EPEpisode 5_C02",
+      "start_segment_id": "E5_S1_031",
+      "end_segment_id": "E5_S1_060",
+      "segment_ids": [
+        "E5_S1_031",
+        "E5_S1_032",
+        "E5_S1_033",
+        "E5_S1_034",
+        "E5_S1_035",
+        "E5_S1_036",
+        "E5_S1_037",
+        "E5_S1_038",
+        "E5_S1_039",
+        "E5_S1_040",
+        "E5_S1_041",
+        "E5_S1_042",
+        "E5_S1_043",
+        "E5_S1_044",
+        "E5_S1_045",
+        "E5_S1_046",
+        "E5_S1_047",
+        "E5_S1_048",
+        "E5_S1_049",
+        "E5_S1_050",
+        "E5_S1_051",
+        "E5_S1_052",
+        "E5_S1_053",
+        "E5_S1_054",
+        "E5_S1_055",
+        "E5_S1_056",
+        "E5_S1_057",
+        "E5_S1_058",
+        "E5_S1_059",
+        "E5_S1_060"
+      ],
+      "hook": "Lady Ashcroft violently snatches Juliana's treasured ledger and throws it into the rain-soaked courtyard mud.",
+      "cliffhanger": "Juliana's new husband delivers a stern threat to Gerald before protecting Juliana and leading her away into the rain.",
+      "standalone_clarity": "Clear character contrast between the cruel high-society family mocking a woman in distress and the protective new husband who restores her dignity.",
+      "narrative_context": "After Juliana's stepmother throws her mother's ledger into the dirt, Juliana's new husband retrieves it, reassures her, and threatens her arrogant ex-fiancé.",
+      "promotional_strength": "Delivers an emotionally satisfying arc from public humiliation to protective rescue and a tense verbal confrontation.",
+      "evidence": [
+        {
+          "segment_id": "E5_S1_032",
+          "timestamp": "00:54.50-00:57.50",
+          "observation": "Lady Ashcroft throws the ledger into the puddle."
+        },
+        {
+          "segment_id": "E5_S1_042",
+          "timestamp": "00:10.50-00:14.50",
+          "observation": "The Mysterious Bearded Man kneels beside Juliana to retrieve her fallen ledger."
+        },
+        {
+          "segment_id": "E5_S1_058",
+          "timestamp": "01:38.00-01:40.80",
+          "observation": "The Mysterious Bearded Man coldly warns Gerald to choose his next words carefully."
+        }
+      ],
+      "candidate_confidence": 0.95
+    }
+  ]
+}

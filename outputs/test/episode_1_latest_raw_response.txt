@@ -1,0 +1,151 @@
+{
+  "episode_number": "Episode 1",
+  "episode_summary": "Lady Juliana arrives at the cathedral expecting to marry Gerald, only to be stopped by the Matriarch and discover Gerald standing at the altar with her sister, Clarissa. Gerald announces he changed his mind and is marrying Clarissa instead. When Juliana begs her father to intervene, he stays silent, while the Matriarch and Clarissa mock Juliana's lower status. Left disgraced in her late mother's bridal gown, Juliana's anguish turns to cold defiance as Gerald turns his back on her.",
+  "story_updates": [
+    "Gerald broke his engagement with Lady Juliana at the altar to marry her sister, Clarissa.",
+    "Juliana's noble family, including her silent father and the commanding Matriarch, fully endorse Gerald marrying Clarissa over Juliana.",
+    "Clarissa revealed that she and Gerald planned this betrayal long before the wedding.",
+    "Juliana's grief over the public humiliation transformed into cold, resolute defiance."
+  ],
+  "unresolved_storylines": [
+    "How will Juliana seek revenge or restore her dignity after being publicly abandoned and disowned by her family and fiancé?",
+    "Will Gerald and Clarissa's wedding proceed without further consequence or disruption from Juliana?"
+  ],
+  "candidate_moments": [
+    {
+      "candidate_id": "EPEpisode 1_C01",
+      "start_segment_id": "E1_S1_021",
+      "end_segment_id": "E1_S1_052",
+      "segment_ids": [
+        "E1_S1_021",
+        "E1_S1_022",
+        "E1_S1_023",
+        "E1_S1_024",
+        "E1_S1_025",
+        "E1_S1_026",
+        "E1_S1_027",
+        "E1_S1_028",
+        "E1_S1_029",
+        "E1_S1_030",
+        "E1_S1_031",
+        "E1_S1_032",
+        "E1_S1_033",
+        "E1_S1_034",
+        "E1_S1_035",
+        "E1_S1_036",
+        "E1_S1_037",
+        "E1_S1_038",
+        "E1_S1_039",
+        "E1_S1_040",
+        "E1_S1_041",
+        "E1_S1_042",
+        "E1_S1_043",
+        "E1_S1_044",
+        "E1_S1_045",
+        "E1_S1_046",
+        "E1_S1_047",
+        "E1_S1_048",
+        "E1_S1_049",
+        "E1_S1_050",
+        "E1_S1_051",
+        "E1_S1_052"
+      ],
+      "hook": "Juliana reaches the altar only to see her groom holding hands with another woman in a gold gown, immediately pulling viewers into a high-stakes wedding drama.",
+      "cliffhanger": "Clarissa gloatingly reveals that she and Gerald planned this long enough to ensure he would never marry Juliana.",
+      "standalone_clarity": "A new viewer immediately understands that a bride is being replaced at the altar by her groom and sister.",
+      "narrative_context": "Juliana arrives at the altar and discovers Gerald holding hands with her sister Clarissa, who triumphantly announces he is marrying her instead.",
+      "promotional_strength": "Features high dramatic tension, clear visual contrast between the devastated bride in white and the gloating sister in gold, and a blunt betrayal hook.",
+      "evidence": [
+        {
+          "segment_id": "E1_S1_021",
+          "timestamp": "00:32.80-00:33.70",
+          "observation": "Low-angle shot shows Gerald holding hands with the Lady in Gold Gown at the altar."
+        },
+        {
+          "segment_id": "E1_S1_027",
+          "timestamp": "00:39.10-00:41.20",
+          "observation": "The Lady in Gold Gown gloats that Gerald is marrying her."
+        },
+        {
+          "segment_id": "E1_S1_041",
+          "timestamp": "01:00.10-01:01.80",
+          "observation": "Gerald callously informs Juliana that he changed his mind."
+        },
+        {
+          "segment_id": "E1_S1_052",
+          "timestamp": "01:15.00-01:18.50",
+          "observation": "Clarissa states they knew long enough to know Gerald was never going to marry Juliana."
+        }
+      ],
+      "candidate_confidence": 0.95
+    },
+    {
+      "candidate_id": "EPEpisode 1_C02",
+      "start_segment_id": "E1_S1_063",
+      "end_segment_id": "E1_S1_095",
+      "segment_ids": [
+        "E1_S1_063",
+        "E1_S1_064",
+        "E1_S1_065",
+        "E1_S1_066",
+        "E1_S1_067",
+        "E1_S1_068",
+        "E1_S1_069",
+        "E1_S1_070",
+        "E1_S1_071",
+        "E1_S1_072",
+        "E1_S1_073",
+        "E1_S1_074",
+        "E1_S1_075",
+        "E1_S1_076",
+        "E1_S1_077",
+        "E1_S1_078",
+        "E1_S1_079",
+        "E1_S1_080",
+        "E1_S1_081",
+        "E1_S1_082",
+        "E1_S1_083",
+        "E1_S1_084",
+        "E1_S1_085",
+        "E1_S1_086",
+        "E1_S1_087",
+        "E1_S1_088",
+        "E1_S1_089",
+        "E1_S1_090",
+        "E1_S1_091",
+        "E1_S1_092",
+        "E1_S1_093",
+        "E1_S1_094",
+        "E1_S1_095"
+      ],
+      "hook": "The Matriarch harshly interrupts the scene, commanding 'Enough!' and accusing the jilted bride of embarrassing the family.",
+      "cliffhanger": "Juliana clenches her mother's gown as her tearful grief transforms into resolute defiance right before the screen cuts to black.",
+      "standalone_clarity": "Easy to follow; shows the family taking the sister's side and the groom publicly rejecting the bride in front of the entire church.",
+      "narrative_context": "The Matriarch and Clarissa demean Juliana's worth compared to Clarissa, culminating in Gerald declaring Juliana to be of plainness and low value before Juliana resolves to stay strong.",
+      "promotional_strength": "Delivers powerful emotional shifts, sharp insults, and a compelling character transition from victim to defiant survivor at the episode climax.",
+      "evidence": [
+        {
+          "segment_id": "E1_S1_064",
+          "timestamp": "01:30.90-01:31.90",
+          "observation": "Matriarch commands 'Enough!' to cut off Juliana's pleading."
+        },
+        {
+          "segment_id": "E1_S1_075",
+          "timestamp": "01:47.50-01:50.80",
+          "observation": "Clarissa tells Juliana she is only tolerated while Clarissa is chosen."
+        },
+        {
+          "segment_id": "E1_S1_087",
+          "timestamp": "02:04.20-02:07.50",
+          "observation": "Gerald calls Juliana a woman of plainness and low value."
+        },
+        {
+          "segment_id": "E1_S1_092",
+          "timestamp": "02:13.80-02:17.00",
+          "observation": "Juliana's tearful expression hardens from sheer devastation into cold, resolute defiance."
+        }
+      ],
+      "candidate_confidence": 0.92
+    }
+  ]
+}

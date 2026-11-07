@@ -1,0 +1,160 @@
+{
+  "episode_number": "Episode 10",
+  "episode_summary": "Alexander arrives at the woodland cottage heavily injured and bleeding. Despite his attempts to downplay his wounds, Juliana insists on dressing them. As she tends to his severe scars and cuts, the emotional barrier between them breaks down, leading to a tender and intimate confession of affection.",
+  "story_updates": [
+    "Alexander arrived at the cottage wounded and bleeding, trying to hide the extent of his injuries from Juliana.",
+    "Juliana tended to Alexander's battle scars and fresh injuries, deepening their emotional intimacy.",
+    "Alexander openly expressed his deep devotion to Juliana, confessing that her touch is the only medicine that eases his pain."
+  ],
+  "unresolved_storylines": [
+    "What caused Alexander's fresh injuries and who attacked him?",
+    "Will the rumors regarding Alexander's scars reach the Blond Nobleman and bring danger to the cottage?",
+    "How will Juliana and Alexander's relationship evolve now that their feelings have been openly expressed?"
+  ],
+  "candidate_moments": [
+    {
+      "candidate_id": "EPEpisode 10_C01",
+      "start_segment_id": "E10_S1_001",
+      "end_segment_id": "E10_S1_018",
+      "segment_ids": [
+        "E10_S1_001",
+        "E10_S1_002",
+        "E10_S1_003",
+        "E10_S1_004",
+        "E10_S1_005",
+        "E10_S1_006",
+        "E10_S1_007",
+        "E10_S1_008",
+        "E10_S1_009",
+        "E10_S1_010",
+        "E10_S1_011",
+        "E10_S1_012",
+        "E10_S1_013",
+        "E10_S1_014",
+        "E10_S1_015",
+        "E10_S1_016",
+        "E10_S1_017",
+        "E10_S1_018"
+      ],
+      "hook": "A sudden banging door interrupts a quiet night, revealing a heavily bleeding Alexander holding his blood-soaked chest.",
+      "cliffhanger": "Juliana forces a wounded and reluctant Alexander to sit down, leaving viewers wondering how badly he is hurt and who injured him.",
+      "standalone_clarity": "Clear for new viewers: a woman resting in a cottage is shocked by a man returning home covered in blood.",
+      "narrative_context": "Alexander returns to the cottage bearing severe wounds, attempting to dismiss the danger while Juliana takes control to help him.",
+      "promotional_strength": "Features high immediate visual drama, starting with a serene moment shattered by a sudden violent entry and physical distress.",
+      "evidence": [
+        {
+          "segment_id": "E10_S1_003",
+          "timestamp": "00:02.10-00:03.30",
+          "observation": "A door suddenly creaks and bangs open in the quiet cottage."
+        },
+        {
+          "segment_id": "E10_S1_005",
+          "timestamp": "00:02.60-00:04.20",
+          "observation": "Alexander stands in the doorway panting heavily with a blood-soaked chest."
+        },
+        {
+          "segment_id": "E10_S1_015",
+          "timestamp": "00:14.50-00:16.00",
+          "observation": "Juliana firmly commands Alexander to sit down so she can treat him."
+        }
+      ],
+      "candidate_confidence": 0.85
+    },
+    {
+      "candidate_id": "EPEpisode 10_C02",
+      "start_segment_id": "E10_S1_025",
+      "end_segment_id": "E10_S1_044",
+      "segment_ids": [
+        "E10_S1_025",
+        "E10_S1_026",
+        "E10_S1_027",
+        "E10_S1_028",
+        "E10_S1_029",
+        "E10_S1_030",
+        "E10_S1_031",
+        "E10_S1_032",
+        "E10_S1_033",
+        "E10_S1_034",
+        "E10_S1_035",
+        "E10_S1_036",
+        "E10_S1_037",
+        "E10_S1_038",
+        "E10_S1_039",
+        "E10_S1_040",
+        "E10_S1_041",
+        "E10_S1_042",
+        "E10_S1_043",
+        "E10_S1_044"
+      ],
+      "hook": "Alexander sheds his shirt to reveal a muscular torso covered in battle scars and fresh bleeding wounds, shocking Juliana.",
+      "cliffhanger": "Juliana playfully calls Alexander a terrible liar as she treats his cut, building lighthearted affection over deep physical trauma.",
+      "standalone_clarity": "Easy to understand; a woman cleans the wounds of a heavily scarred man who tries to act stoic.",
+      "narrative_context": "Juliana gets Alexander to reveal his injuries, exposing his scarred history and beginning to tend to his wounds.",
+      "promotional_strength": "Strong visual impact showing extensive scars and a compelling shift from physical shock to intimate tenderness.",
+      "evidence": [
+        {
+          "segment_id": "E10_S1_027",
+          "timestamp": "00:33.20-00:36.50",
+          "observation": "Alexander removes his shirt revealing battle scars and fresh lacerations."
+        },
+        {
+          "segment_id": "E10_S1_032",
+          "timestamp": "00:43.00-00:45.00",
+          "observation": "Juliana's hands hover tenderly over the raised scar across his chest."
+        },
+        {
+          "segment_id": "E10_S1_044",
+          "timestamp": "00:55.60-00:57.60",
+          "observation": "Juliana playfully whispers that he is a terrible liar when he pretends it doesn't hurt."
+        }
+      ],
+      "candidate_confidence": 0.9
+    },
+    {
+      "candidate_id": "EPEpisode 10_C03",
+      "start_segment_id": "E10_S1_045",
+      "end_segment_id": "E10_S1_060",
+      "segment_ids": [
+        "E10_S1_045",
+        "E10_S1_046",
+        "E10_S1_047",
+        "E10_S1_048",
+        "E10_S1_049",
+        "E10_S1_050",
+        "E10_S1_051",
+        "E10_S1_052",
+        "E10_S1_053",
+        "E10_S1_054",
+        "E10_S1_055",
+        "E10_S1_056",
+        "E10_S1_057",
+        "E10_S1_058",
+        "E10_S1_059",
+        "E10_S1_060"
+      ],
+      "hook": "While Juliana applies herbal salve to Alexander's wound, he stares intently into her eyes, creating sudden romantic tension.",
+      "cliffhanger": "Alexander places Juliana's hands on his bare heart and declares her touch is his only medicine, leaving Juliana overwhelmed as the scene fades.",
+      "standalone_clarity": "Highly accessible intimate romance scene between a wounded man and the woman caring for him.",
+      "narrative_context": "The act of dressing Alexander's wounds leads into an intense emotional confession and romantic milestone.",
+      "promotional_strength": "Offers high romantic tension, intense gaze dialogue, and an emotional climax suitable for attracting viewers interested in relationship drama.",
+      "evidence": [
+        {
+          "segment_id": "E10_S1_050",
+          "timestamp": "01:06.50-01:08.40",
+          "observation": "Alexander intensely tells Juliana he stares because she is looking at him."
+        },
+        {
+          "segment_id": "E10_S1_057",
+          "timestamp": "01:19.00-01:22.50",
+          "observation": "Alexander takes Juliana's hands and holds them to his bare chest over his heart."
+        },
+        {
+          "segment_id": "E10_S1_059",
+          "timestamp": "01:22.60-01:25.90",
+          "observation": "Alexander confesses that her touch is the only medicine that eases his pain."
+        }
+      ],
+      "candidate_confidence": 0.92
+    }
+  ]
+}

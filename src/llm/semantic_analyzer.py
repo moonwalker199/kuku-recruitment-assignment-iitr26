@@ -30,7 +30,11 @@ from typing import Any
 
 from src.candidate_generation.window_generator import CandidateWindow
 from src.config import Config
-from src.llm.client import LLMClient, LLMUnavailable
+from src.llm.client import (
+    LLMClient,
+    LLMUnavailable,
+    _parse_json_response,
+)
 from src.llm.prompts import (
     build_analysis_prompt,
     build_episode_analysis_prompt,
@@ -316,7 +320,7 @@ class SemanticAnalyzer:
         self.stats["api_calls"] += 1
 
         try:
-            raw_response = self._client.call_json(prompt)
+            raw_text = self._client.call(prompt)
         except Exception as exc:
             self.stats["failed_calls"] += 1
             logger.error(
@@ -326,9 +330,46 @@ class SemanticAnalyzer:
             )
             return None
 
-        if raw_response is None:
+        if raw_text is None:
             self.stats["failed_calls"] += 1
             logger.warning("LLM returned no response for %s.", episode_name)
+            return None
+
+        # Diagnostic capture: save each raw episode response before parsing.
+        # This helps investigate malformed or truncated JSON responses.
+        safe_episode_name = "".join(
+            char if char.isalnum() or char in ("-", "_") else "_"
+            for char in episode_name.lower().replace(" ", "_")
+        )
+
+        debug_path = Path(
+            f"outputs/test/{safe_episode_name}_raw_response.txt"
+        )
+
+        try:
+            debug_path.parent.mkdir(parents=True, exist_ok=True)
+            debug_path.write_text(raw_text, encoding="utf-8")
+
+            logger.info(
+                "Saved raw Gemini response for %s to %s.",
+                episode_name,
+                debug_path,
+            )
+        except OSError as exc:
+            logger.warning(
+                "Could not save raw response for %s: %s",
+                episode_name,
+                exc,
+            )
+
+        raw_response = _parse_json_response(raw_text)
+
+        if raw_response is None:
+            self.stats["failed_calls"] += 1
+            logger.warning(
+                "LLM returned invalid JSON for %s.",
+                episode_name,
+            )
             return None
 
         validated = validate_episode_analysis_response(
@@ -890,7 +931,8 @@ class SemanticAnalyzer:
             "primary_weakness": validated.get("major_weakness", ""),
             "evaluation_weights": validated["evaluation_weights"],
             "evaluation_duration_seconds": validated["duration_seconds"],
-    }
+        }
+
     def _get_evaluation_cache_path(
         self,
         episode: dict,

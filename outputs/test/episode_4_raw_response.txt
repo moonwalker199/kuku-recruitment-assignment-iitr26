@@ -1,0 +1,192 @@
+{
+  "episode_number": "Episode 4",
+  "episode_summary": "Despite mockery from Gerald and Clarissa, Lady Juliana questions the mysterious scarred warrior kneeling before her. After he assures her his offer is a solemn vow rather than pity, Juliana accepts. The Priest officiates the marriage, officially wedding Juliana to the stranger. Enraged by her decision, Gerald shouts insults, but Juliana cuts him down, declaring she would rather choose her own life than beg for his. Lady Ashcroft formally disowns Juliana and banishes her from Ashcroft Manor, but Juliana and her new husband walk out of the cathedral hand-in-hand into the sunlight, leaving her past behind.",
+  "story_updates": [
+    "Lady Juliana accepts the proposal of the Mysterious Bearded Man and is officially wed to him in the chapel.",
+    "Lady Ashcroft formally disowns Juliana and banishes her and her new husband from Ashcroft Manor.",
+    "Juliana completely cuts emotional ties with Gerald and her family, asserting her independence."
+  ],
+  "unresolved_storylines": [
+    "Who is the Mysterious Bearded Man and what life awaits Juliana with him outside Ashcroft Manor?",
+    "How will Gerald, Clarissa, and the Ashcroft family react to the public embarrassment of Juliana's defiance and unexpected marriage?"
+  ],
+  "candidate_moments": [
+    {
+      "candidate_id": "EPEpisode 4_C01",
+      "start_segment_id": "E4_S1_023",
+      "end_segment_id": "E4_S1_057",
+      "segment_ids": [
+        "E4_S1_023",
+        "E4_S1_024",
+        "E4_S1_025",
+        "E4_S1_026",
+        "E4_S1_027",
+        "E4_S1_028",
+        "E4_S1_029",
+        "E4_S1_030",
+        "E4_S1_031",
+        "E4_S1_032",
+        "E4_S1_033",
+        "E4_S1_034",
+        "E4_S1_035",
+        "E4_S1_036",
+        "E4_S1_037",
+        "E4_S1_038",
+        "E4_S1_039",
+        "E4_S1_040",
+        "E4_S1_041",
+        "E4_S1_042",
+        "E4_S1_043",
+        "E4_S1_044",
+        "E4_S1_045",
+        "E4_S1_046",
+        "E4_S1_047",
+        "E4_S1_048",
+        "E4_S1_049",
+        "E4_S1_050",
+        "E4_S1_051",
+        "E4_S1_052",
+        "E4_S1_053",
+        "E4_S1_054",
+        "E4_S1_055",
+        "E4_S1_056",
+        "E4_S1_057"
+      ],
+      "hook": "A scarred stranger kneeling in front of a chapel altar delivers a grave, earnest declaration to a betrayed bride that she does not deserve to be discarded.",
+      "cliffhanger": "Juliana accepts the stranger's proposal and he stands to take her hand, leaving viewers eager to see if the wedding will actually proceed.",
+      "standalone_clarity": "Highly accessible to new viewers: the dialogue explicitly explains that Juliana was betrayed by her family and that this stranger is stepping up to offer her respect and protection.",
+      "narrative_context": "Juliana confronts the kneeling stranger about his motives before deciding to accept his proposal over her family's betrayal.",
+      "promotional_strength": "Features strong emotional dynamic between a vulnerable yet proud heroine and a protective, solemn warrior offering a compelling vow.",
+      "evidence": [
+        {
+          "segment_id": "E4_S1_024",
+          "timestamp": "00:28.00-00:30.20",
+          "observation": "The Mysterious Bearded Man tells Juliana he sees a woman who was betrayed, not discarded."
+        },
+        {
+          "segment_id": "E4_S1_046",
+          "timestamp": "01:03.50-01:05.50",
+          "observation": "The stranger clarifies his offer is not pity but a solemn vow."
+        },
+        {
+          "segment_id": "E4_S1_054",
+          "timestamp": "01:12.80-01:14.50",
+          "observation": "Juliana accepts his proposal."
+        }
+      ],
+      "candidate_confidence": 0.92
+    },
+    {
+      "candidate_id": "EPEpisode 4_C02",
+      "start_segment_id": "E4_S1_069",
+      "end_segment_id": "E4_S1_095",
+      "segment_ids": [
+        "E4_S1_069",
+        "E4_S1_070",
+        "E4_S1_071",
+        "E4_S1_072",
+        "E4_S1_073",
+        "E4_S1_074",
+        "E4_S1_075",
+        "E4_S1_076",
+        "E4_S1_077",
+        "E4_S1_078",
+        "E4_S1_079",
+        "E4_S1_080",
+        "E4_S1_081",
+        "E4_S1_082",
+        "E4_S1_083",
+        "E4_S1_084",
+        "E4_S1_085",
+        "E4_S1_086",
+        "E4_S1_087",
+        "E4_S1_088",
+        "E4_S1_089",
+        "E4_S1_090",
+        "E4_S1_091",
+        "E4_S1_092",
+        "E4_S1_093",
+        "E4_S1_094",
+        "E4_S1_095"
+      ],
+      "hook": "The mysterious warrior slides a silver ring onto Juliana's finger, giving her his solemn word of protection as the Priest prepares to pronounce them married.",
+      "cliffhanger": "Gerald is left completely speechless and recoils in shock after Juliana delivers a stinging verbal rebuke.",
+      "standalone_clarity": "Clear arc showing a wedding ceremony culminating in the ex-fiancé's furious outburst and the bride's triumphant retort.",
+      "narrative_context": "The priest pronounces Juliana and the warrior husband and wife, triggering a furious reaction from Gerald that Juliana immediately shuts down.",
+      "promotional_strength": "Delivers a satisfying reversal where the humiliated bride gains power, gets married to her defender, and silences her arrogant ex-fiancé.",
+      "evidence": [
+        {
+          "segment_id": "E4_S1_084",
+          "timestamp": "01:53.00-01:54.80",
+          "observation": "The Priest pronounces them husband and wife."
+        },
+        {
+          "segment_id": "E4_S1_087",
+          "timestamp": "01:55.00-01:56.80",
+          "observation": "Gerald lunges forward shouting that she threw herself away."
+        },
+        {
+          "segment_id": "E4_S1_093",
+          "timestamp": "02:03.00-02:05.50",
+          "observation": "Juliana declares she would rather choose her own life than spend another moment begging for his."
+        }
+      ],
+      "candidate_confidence": 0.95
+    },
+    {
+      "candidate_id": "EPEpisode 4_C03",
+      "start_segment_id": "E4_S1_086",
+      "end_segment_id": "E4_S1_110",
+      "segment_ids": [
+        "E4_S1_086",
+        "E4_S1_087",
+        "E4_S1_088",
+        "E4_S1_089",
+        "E4_S1_090",
+        "E4_S1_091",
+        "E4_S1_092",
+        "E4_S1_093",
+        "E4_S1_094",
+        "E4_S1_095",
+        "E4_S1_096",
+        "E4_S1_097",
+        "E4_S1_098",
+        "E4_S1_099",
+        "E4_S1_100",
+        "E4_S1_101",
+        "E4_S1_102",
+        "E4_S1_103",
+        "E4_S1_104",
+        "E4_S1_105",
+        "E4_S1_106",
+        "E4_S1_107",
+        "E4_S1_108",
+        "E4_S1_109",
+        "E4_S1_110"
+      ],
+      "hook": "Immediately after the wedding, Gerald lunges forward in a rage, screaming at Juliana that she has thrown her life away.",
+      "cliffhanger": "Juliana and her new husband walk hand-in-hand out into the bright sunlight, leaving her disowning family behind in stunned silence.",
+      "standalone_clarity": "Easy to follow dramatic climax: a woman is insulted and disowned by her family after marrying a stranger, but chooses to walk away with dignity.",
+      "narrative_context": "Following the marriage pronouncement, Juliana confronts Gerald and Lady Ashcroft, accepts being disowned, and leaves the chapel with her new husband.",
+      "promotional_strength": "Provides a high-energy climax containing confrontation, formal banishment/disowning, and a dramatic visual exit into an unknown future.",
+      "evidence": [
+        {
+          "segment_id": "E4_S1_087",
+          "timestamp": "01:55.00-01:56.80",
+          "observation": "Gerald angrily shouts at Juliana for marrying a penniless nobody."
+        },
+        {
+          "segment_id": "E4_S1_099",
+          "timestamp": "02:12.00-02:14.50",
+          "observation": "Lady Ashcroft venomously disowns Juliana and forbids them from Ashcroft Manor."
+        },
+        {
+          "segment_id": "E4_S1_109",
+          "timestamp": "02:27.50-02:31.40",
+          "observation": "Juliana and the Mysterious Bearded Man walk out through the chapel doors into the sunlight together."
+        }
+      ],
+      "candidate_confidence": 0.90
+    }
+  ]
+}
