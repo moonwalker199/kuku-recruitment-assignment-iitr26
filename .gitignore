@@ -90,3 +90,7 @@ outputs/cache/
 *.tmp
 *.temp
 *.log
+
+
+
+.streamlit/secrets.toml

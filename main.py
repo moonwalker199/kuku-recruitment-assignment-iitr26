@@ -652,6 +652,8 @@ def run(
     input_dir: str,
     max_candidates_per_episode: int = 5,
     shortlist_size: int = 30,
+    output_root: str | Path = "outputs",
+    cache_root: str | Path | None = None,
 ) -> dict:
     """Execute discovery, optimization, evaluation and ranking."""
 
@@ -715,7 +717,19 @@ def run(
     # Stage 2: Episode-level LLM analysis
     # --------------------------------------------------------
 
-    analyzer = SemanticAnalyzer(cfg)
+    # analyzer = SemanticAnalyzer(cfg)
+    if cache_root is None:
+        analyzer = SemanticAnalyzer(cfg)
+    else:
+        cache_root = Path(cache_root)
+        analyzer = SemanticAnalyzer(
+        cfg,
+        cache_dir=cache_root / "episode_analysis",
+        boundary_cache_dir=cache_root / "boundary_optimization",
+        evaluation_cache_dir=cache_root / "promo_evaluation",
+    )
+
+
     stats["llm_enabled"] = analyzer.is_available
 
     if not analyzer.is_available:
@@ -865,7 +879,8 @@ def run(
     # Stage 8: Save outputs
     # --------------------------------------------------------
 
-    output_root = Path("outputs")
+    # output_root = Path("outputs")
+    output_root = Path(output_root)
 
     analysis_path = (
         output_root / "episode_analysis" / "episode_analysis.json"
