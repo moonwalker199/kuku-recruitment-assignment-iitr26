@@ -426,6 +426,8 @@ class _GeminiClient(_BaseClient):
         max_retries: int,
         retry_delay: float,
         thinking_level: str | None = None,
+        api_key: str | None = None,
+        
     ) -> None:
 
         if not _GENAI_AVAILABLE:
@@ -434,8 +436,14 @@ class _GeminiClient(_BaseClient):
                 "Run: pip install -U google-genai"
             )
 
+        # api_key = (
+        #     os.getenv("GOOGLE_API_KEY")
+        #     or os.getenv("GEMINI_API_KEY")
+        # )
+
         api_key = (
-            os.getenv("GOOGLE_API_KEY")
+            api_key
+            or os.getenv("GOOGLE_API_KEY")
             or os.getenv("GEMINI_API_KEY")
         )
 
@@ -614,7 +622,6 @@ class _GeminiClient(_BaseClient):
 # ---------------------------------------------------------------------
 # OpenAI client
 # ---------------------------------------------------------------------
-
 class _OpenAIClient(_BaseClient):
 
     def __init__(
@@ -625,6 +632,8 @@ class _OpenAIClient(_BaseClient):
         timeout: float,
         max_retries: int,
         retry_delay: float,
+        api_key: str | None = None,
+        base_url: str | None = None,
     ) -> None:
 
         if not _OPENAI_AVAILABLE:
@@ -632,18 +641,26 @@ class _OpenAIClient(_BaseClient):
                 "openai is not installed. Run: pip install openai"
             )
 
-        api_key = os.getenv("OPENAI_API_KEY")
+        resolved_api_key = (
+            api_key
+            or os.getenv("OPENAI_API_KEY")
+        )
 
-        if not api_key:
+        if not resolved_api_key:
             raise LLMUnavailable(
-                "No OpenAI API key found. "
-                "Set OPENAI_API_KEY in .env."
+                "No API key provided. Enter your API key "
+                "or configure OPENAI_API_KEY."
             )
 
-        self._client = _OpenAI(
-            api_key=api_key,
-            timeout=timeout,
-        )
+        client_kwargs = {
+            "api_key": resolved_api_key,
+            "timeout": timeout,
+        }
+
+        if base_url:
+            client_kwargs["base_url"] = base_url
+
+        self._client = _OpenAI(**client_kwargs)
 
         self._model = model
         self._temperature = temperature
@@ -652,8 +669,9 @@ class _OpenAIClient(_BaseClient):
         self._retry_delay = retry_delay
 
         logger.info(
-            "OpenAI client initialised (model=%s).",
+            "OpenAI-compatible client initialised (model=%s, custom_endpoint=%s).",
             model,
+            bool(base_url),
         )
 
     def call(self, prompt: str) -> str | None:
@@ -686,7 +704,7 @@ class _OpenAIClient(_BaseClient):
 
                 if not content:
                     logger.error(
-                        "OpenAI returned an empty response."
+                        "OpenAI-compatible API returned an empty response."
                     )
                     return None
 
@@ -707,8 +725,8 @@ class _OpenAIClient(_BaseClient):
                     )
 
                     logger.warning(
-                        "OpenAI request failed "
-                        "(attempt %d/%d). Retrying in %.1fs. Error: %s",
+                        "API request failed (attempt %d/%d). "
+                        "Retrying in %.1fs. Error: %s",
                         attempt,
                         self._max_retries,
                         delay,
@@ -719,7 +737,7 @@ class _OpenAIClient(_BaseClient):
 
                 else:
                     logger.error(
-                        "OpenAI request failed after %d attempt(s): %s",
+                        "API request failed after %d attempt(s): %s",
                         attempt,
                         exc,
                     )
@@ -759,6 +777,7 @@ class LLMClient:
         cls,
         cfg,
         stage: str | None = None,
+        api_key: str | None = None,
     ) -> "LLMClient":
 
         selected_stage = stage or "episode_analysis"
@@ -784,6 +803,7 @@ class LLMClient:
         }
 
         if llm.provider == "google":
+
             inner = _GeminiClient(
                 **kwargs,
                 thinking_level=getattr(
@@ -791,10 +811,16 @@ class LLMClient:
                     "thinking_level",
                     None,
                 ),
+                api_key=api_key,
             )
 
-        elif llm.provider == "openai":
-            inner = _OpenAIClient(**kwargs)
+        elif llm.provider in ("openai", "openai_compatible"):
+
+            inner = _OpenAIClient(
+                **kwargs,
+                api_key=api_key,
+                base_url=getattr(llm, "base_url", None),
+            )
 
         else:
             raise LLMUnavailable(
@@ -814,7 +840,6 @@ class LLMClient:
             provider=llm.provider,
             model=llm.model,
         )
-
     def call(self, prompt: str) -> str | None:
         return self._inner.call(prompt)
 

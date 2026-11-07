@@ -1,4 +1,3 @@
-
 import os
 import re
 import json
@@ -19,19 +18,137 @@ from main import run
 # --------------------------------------------------
 
 st.set_page_config(
-    page_title="Microdrama Promo Discovery",
-    page_icon="🎬",
+    page_title="AI Drama Promo Generator Pipelie",
+
     layout="wide",
 )
 
-MAX_FILES = 50
+# --------------------------------------------------
+# CUSTOM UI THEME
+# --------------------------------------------------
+
+st.markdown(
+    """
+    <style>
+    /* Main application background */
+    .stApp {
+        background-color: #000107;
+        color: #FFFFFF;
+    }
+    /* Sidebar starts 0.5rem from the browser top */
+    [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+    padding-top: 0.5rem !important;
+    margin-top: 0 !important;
+}
+
+/* Remove Streamlit's header offset */
+[data-testid="stSidebar"] > div:first-child {
+    padding-top: 0 !important;
+}
+}
+
+    /* Main content */
+    [data-testid="stAppViewContainer"] {
+        background-color: #000107;
+    }
+
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background-color: #17181D;
+        border-right: 1px solid #303139;
+    }
+
+    [data-testid="stSidebar"] * {
+        color: #FFFFFF;
+    }
+    /* Keep sidebar help tooltips within the sidebar width */
+    [data-testid="stTooltipContent"] {
+    max-width: 260px !important;
+    
+    transparency: 0.4 !important;
+    width: 260px !important;
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+}
+
+    /* Headings */
+    h1, h2, h3 {
+        color: #FFFFFF !important;
+    }
+
+    /* Secondary text */
+    .stCaption, [data-testid="stCaptionContainer"] {
+        color: #A7A7AF !important;
+    }
+
+    /* Primary buttons */
+    .stButton > button[kind="primary"] {
+        background-color: #EC1C24;
+        color: #FFFFFF;
+        border: 1px solid #EC1C24;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .stButton > button[kind="primary"]:hover {
+        background-color: #C9161D;
+        border-color: #C9161D;
+        color: #FFFFFF;
+    }
+
+    /* Secondary buttons */
+    .stButton > button {
+        border-radius: 8px;
+        border-color: #44454D;
+    }
+
+    /* Input fields */
+    input, textarea, [data-baseweb="select"] > div {
+        background-color: #24252B !important;
+        color: #FFFFFF !important;
+        border-color: #44454D !important;
+    }
+
+    /* Tabs */
+    button[data-baseweb="tab"] {
+        color: #B8B8C0;
+    }
+
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #EC1C24 !important;
+        border-bottom-color: #EC1C24 !important;
+    }
+
+    /* Metrics and bordered containers */
+    [data-testid="stMetric"],
+    [data-testid="stExpander"] {
+        background-color: #17181D;
+        border-radius: 8px;
+    }
+
+    /* Dividers */
+    hr {
+        border-color: #303139;
+    }
+
+    /* Links */
+    a {
+        color: #FF555B !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+MAX_FILES = 75
 MAX_FILE_SIZE = 5 * 1024 * 1024
 MAX_TOTAL_SIZE = 50 * 1024 * 1024
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 JOBS_ROOT = PROJECT_ROOT / "outputs" / "streamlit_jobs"
 
-# Prevent simultaneous pipeline runs in this Python process.
 if "pipeline_lock" not in globals():
     pipeline_lock = threading.Lock()
 
@@ -60,14 +177,17 @@ def authenticate():
     if st.session_state.get("authenticated", False):
         return
 
-    st.title("🎬 Microdrama Promo Discovery")
+    st.title("AI Drama Promo Generation Pipeline")
     st.subheader("Authentication required")
 
     if "login_attempts" not in st.session_state:
         st.session_state.login_attempts = 0
 
     if st.session_state.login_attempts >= 5:
-        st.error("Too many failed attempts. Refresh the session to try again.")
+        st.error(
+            "Too many failed attempts. "
+            "Refresh the session to try again."
+        )
         st.stop()
 
     entered_password = st.text_input(
@@ -76,7 +196,10 @@ def authenticate():
     )
 
     if st.button("Unlock application", type="primary"):
-        if hmac.compare_digest(str(entered_password), str(app_password)):
+        if hmac.compare_digest(
+            str(entered_password),
+            str(app_password),
+        ):
             st.session_state.authenticated = True
             st.rerun()
         else:
@@ -87,23 +210,6 @@ def authenticate():
 
 
 authenticate()
-
-
-# --------------------------------------------------
-# API CONFIGURATION
-# --------------------------------------------------
-
-# The app owner's Gemini key is an optional server-side fallback.
-# Never put a visitor's BYOK key into an environment variable.
-
-server_api_key = (
-    get_secret("GOOGLE_API_KEY")
-    or os.getenv("GOOGLE_API_KEY")
-)
-
-if server_api_key:
-    # Existing server-side key behavior is preserved.
-    os.environ["GOOGLE_API_KEY"] = str(server_api_key)
 
 
 # --------------------------------------------------
@@ -166,7 +272,10 @@ def validate_uploads(uploaded_files):
             return f"{uploaded_file.name} is empty."
 
         if file_size > MAX_FILE_SIZE:
-            return f"{uploaded_file.name} exceeds the 5 MB per-file limit."
+            return (
+                f"{uploaded_file.name} exceeds "
+                "the 5 MB per-file limit."
+            )
 
     if total_size > MAX_TOTAL_SIZE:
         return "Combined upload size exceeds the 50 MB limit."
@@ -183,7 +292,10 @@ def parse_uploaded_files(uploaded_files, job_dir):
 
     parse_summary = []
 
-    for index, uploaded_file in enumerate(uploaded_files, start=1):
+    for index, uploaded_file in enumerate(
+        uploaded_files,
+        start=1,
+    ):
         original_name = safe_filename(uploaded_file.name)
 
         raw_path = raw_dir / f"{index:03d}_{original_name}"
@@ -193,7 +305,8 @@ def parse_uploaded_files(uploaded_files, job_dir):
 
         if not isinstance(parsed, dict):
             raise ValueError(
-                f"Parser returned an invalid result for {uploaded_file.name}."
+                f"Parser returned an invalid result "
+                f"for {uploaded_file.name}."
             )
 
         if (
@@ -259,7 +372,7 @@ def display_result_tab(title, data, filename):
 # MAIN INTERFACE
 # --------------------------------------------------
 
-st.title("🎬 Microdrama Promo Discovery")
+st.title("AI Drama Promo Generator Pipeline")
 
 st.write(
     "Upload screenplay episodes to discover, evaluate and rank "
@@ -273,72 +386,174 @@ st.write(
 
 with st.sidebar:
     st.header("Pipeline settings")
+    st.subheader("Model connection")
 
-    model_options = [
-        "gemini-3.5-flash-lite",
-        "gemini-3.5-flash",
-        "Custom model",
+    provider_options = {
+        "Google Gemini": "google",
+        "OpenAI": "openai",
+        "OpenAI-compatible API": "openai_compatible",
+    }
+
+    selected_provider_label = st.selectbox(
+        "API protocol",
+        list(provider_options.keys()),
+    )
+
+    selected_provider = provider_options[
+        selected_provider_label
     ]
 
+    if selected_provider == "google":
+
+        default_model = "gemini-3.5-flash-lite"
+
+        model_options = [
+            "gemini-3.5-flash-lite",
+            "gemini-3.5-flash",
+            "Custom model",
+        ]
+
+    elif selected_provider == "openai":
+
+        default_model = "gpt-4o-mini"
+
+        model_options = [
+            "gpt-4o-mini",
+            "gpt-4.1-mini",
+            "Custom model",
+        ]
+
+    else:
+
+        default_model = ""
+
+        model_options = [
+            "Custom model",
+        ]
+
     selected_option = st.selectbox(
-        "Gemini model",
+        "Model",
         model_options,
         index=0,
+        key=f"model_options_{selected_provider}",
     )
 
     if selected_option == "Custom model":
         selected_model = st.text_input(
-            "Enter Gemini model ID",
-            placeholder="Enter a supported model ID",
+            "Model ID",
+            placeholder="Enter the exact model ID",
+            key=f"custom_model_{selected_provider}",
         )
     else:
         selected_model = selected_option
 
-    max_candidates = st.number_input(
-        "Candidates per episode",
-        min_value=1,
-        max_value=10,
-        value=5,
-    )
+    base_url = None
 
-    shortlist_size = st.number_input(
-        "Final shortlist size",
-        min_value=5,
-        max_value=100,
-        value=30,
-    )
+    if selected_provider in (
+        "openai",
+        "openai_compatible",
+    ):
 
-    st.divider()
-
-    st.header("Gemini API authentication")
-
-    user_api_key = st.text_input(
-        "Your Gemini API key (optional)",
-        type="password",
-        placeholder="Enter your own Gemini API key",
-        help=(
-            "If provided, this key takes priority over the app's "
-            "server-side Gemini key. Your key is sent to Google's "
-            "Gemini API for processing."
-        ),
-    )
-
-    if user_api_key.strip():
-        st.success("Your own API key will be used for this run.")
-    elif server_api_key:
-        st.info("Using the application's configured Gemini API key.")
-    else:
-        st.warning(
-            "No server-side API key is configured. "
-            "Enter your own Gemini API key to run the pipeline."
+        base_url_input = st.text_input(
+            "Base URL (optional)",
+            placeholder=(
+                "https://api.example.com/v1"
+                if selected_provider == "openai_compatible"
+                else "Leave blank for the official OpenAI API"
+            ),
+            help=(
+                "For an OpenAI-compatible provider, enter its "
+                "API endpoint. Leave blank to use the default "
+                "OpenAI endpoint."
+            ),
         )
 
+        base_url = base_url_input.strip() or None
+
+
+
+    max_candidates = st.number_input(
+            "Candidates per episode",
+            min_value=1,
+            max_value=10,
+            value=5,
+        )
+    
+    shortlist_size = st.number_input(
+            "Final shortlist size",
+            min_value=5,
+            max_value=100,
+            value=30,
+        )
+    
     st.caption(
-        "Model availability, request limits and billing depend on "
-        "the Google AI account associated with the selected key."
+            "The selected model and endpoint must support the "
+            "configured JSON response workflow."
+        )
+    
+    
+    st.markdown("<div style='height: 4px'></div>", unsafe_allow_html=True)
+    st.subheader("Bring Your Own Key")
+
+    if selected_provider == "google":
+        server_api_key = (
+            get_secret("GOOGLE_API_KEY")
+            or os.getenv("GOOGLE_API_KEY")
+            or os.getenv("GEMINI_API_KEY")
+        )
+        key_placeholder = "Paste your Google Gemini API key"
+
+    elif selected_provider == "openai":
+        server_api_key = (
+            get_secret("OPENAI_API_KEY")
+            or os.getenv("OPENAI_API_KEY")
+        )
+        key_placeholder = "Paste your OpenAI API key"
+
+    else:
+        server_api_key = None
+        key_placeholder = "Paste your provider API key"
+
+    user_api_key = st.text_input(
+        "Add Your Own API Key",
+        type="password",
+        placeholder=key_placeholder,
+        help=(
+            "Enter your own API key to authenticate with the "
+            "selected provider."
+        ),
+        key="user_api_key_input",
     )
 
+    st.caption(
+        "API usage through your own key is billed directly "
+        "to your account by the selected provider."
+    )
 
+    st.warning(
+        "Your key is passed to the selected API client for the "
+        "pipeline run. The app does not intentionally save it "
+        "to project files or pipeline output files."
+    )
+
+    
+
+    if user_api_key.strip():
+        st.success("Your own API key is ready to use.")
+
+    elif server_api_key:
+        st.info(
+            "No personal key entered. The application's "
+            "configured server-side key will be used instead."
+        )
+
+    else:
+        st.warning(
+            "Add your own API key to enable pipeline execution."
+        )
+
+
+    
 # --------------------------------------------------
 # FILE UPLOAD
 # --------------------------------------------------
@@ -346,12 +561,13 @@ with st.sidebar:
 st.subheader("1. Upload screenplay files")
 
 uploaded_files = st.file_uploader(
-    "Select up to 50 English screenplay TXT files",
+    "Select up to 70 English screenplay TXT files",
     type=["txt"],
     accept_multiple_files=True,
 )
 
 if uploaded_files:
+
     total_size = sum(
         len(file.getvalue())
         for file in uploaded_files
@@ -368,8 +584,8 @@ if uploaded_files:
 
     if len(uploaded_files) < 50:
         st.info(
-            "You uploaded fewer than 50 files. This is allowed for "
-            "testing; the full assignment input contains 50 episodes."
+            "You uploaded fewer than 50 files. "
+            "This is allowed for testing."
         )
 
     with st.expander("Uploaded filenames"):
@@ -382,8 +598,8 @@ if uploaded_files:
 # --------------------------------------------------
 
 st.warning(
-    "A full run can take several minutes because the pipeline makes "
-    "multiple model calls. Keep this page open while processing."
+    "A full run can take several minutes because the pipeline "
+    "makes multiple model calls. Keep this page open while processing."
 )
 
 run_button = st.button(
@@ -404,27 +620,44 @@ if run_button:
 
     upload_error = validate_uploads(uploaded_files)
 
-    # BYOK takes priority over the server-side key.
-    effective_api_key = user_api_key.strip() or None
+    effective_api_key = (
+        user_api_key.strip()
+        or server_api_key
+        or None
+    )
 
     if upload_error:
+
         st.error(upload_error)
 
-    elif not effective_api_key and not server_api_key:
+    elif not effective_api_key:
+
         st.error(
-            "No Gemini API key is available. "
-            "Enter your own key in the sidebar or ask the app "
-            "administrator to configure the server-side key."
+            "No API key is available. "
+            "Enter a key in the sidebar or configure "
+            "a supported server-side key."
+        )
+
+    elif (
+        selected_provider == "openai_compatible"
+        and not base_url
+    ):
+
+        st.error(
+            "Enter the Base URL for the OpenAI-compatible API."
         )
 
     elif not pipeline_lock.acquire(blocking=False):
+
         st.error(
             "Another pipeline run is currently in progress. "
             "Please try again after it finishes."
         )
 
     else:
+
         try:
+
             job_id = uuid.uuid4().hex
             job_dir = JOBS_ROOT / job_id
             job_dir.mkdir(parents=True, exist_ok=True)
@@ -447,8 +680,10 @@ if run_button:
                     job_dir,
                 )
 
-                parse_summary_path = job_dir / "parse_summary.json"
-                write_json(parse_summary_path, parse_summary)
+                write_json(
+                    job_dir / "parse_summary.json",
+                    parse_summary,
+                )
 
                 total_parse_errors = sum(
                     item["parse_errors"]
@@ -465,7 +700,7 @@ if run_button:
                 # ----------------------------------------
 
                 st.write(
-                    "Step 2: Configuring the selected Gemini model..."
+                    "Step 2: Configuring the selected model..."
                 )
 
                 cfg = load_config()
@@ -475,9 +710,12 @@ if run_button:
                     "boundary_optimization",
                     "promo_evaluation",
                 ):
+
                     llm_cfg = cfg.get_llm_config(stage)
-                    llm_cfg.provider = "google"
-                    llm_cfg.model = selected_model
+
+                    llm_cfg.provider = selected_provider
+                    llm_cfg.model = selected_model.strip()
+                    llm_cfg.base_url = base_url
 
                 # ----------------------------------------
                 # STEP 3: PIPELINE EXECUTION
@@ -493,12 +731,8 @@ if run_button:
                     "shortlist_size": int(shortlist_size),
                     "output_root": job_dir / "outputs",
                     "cache_root": job_dir / "cache",
+                    "api_key": effective_api_key,
                 }
-
-                # Only pass api_key when the visitor supplied BYOK.
-                # Never put the visitor's key into os.environ.
-                if effective_api_key:
-                    run_kwargs["api_key"] = effective_api_key
 
                 stats = run(
                     cfg,
@@ -516,7 +750,6 @@ if run_button:
                     expanded=False,
                 )
 
-            # Store output metadata only, never the API key.
             st.session_state.last_job_dir = str(job_dir)
             st.session_state.last_job_id = job_id
             st.session_state.last_parse_summary = parse_summary
@@ -525,10 +758,12 @@ if run_button:
             st.success(f"Completed job: {job_id}")
 
         except Exception as exc:
+
             st.error(f"Pipeline failed: {exc}")
             st.exception(exc)
 
         finally:
+
             pipeline_lock.release()
 
 
