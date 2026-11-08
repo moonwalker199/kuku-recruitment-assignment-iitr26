@@ -102,7 +102,7 @@ The pipeline combines deterministic Python processing with LLM-based narrative a
 ### Solution Architecture
 
 <p align="center">
-  <img src="flowchart.png" alt="Solution Architecture Flowchart" width="500"/>
+  <img src="assets\flowchart.png" alt="Solution Architecture Flowchart" width="500"/>
 </p>
 ### Stage 1: Screenplay ingestion
 
