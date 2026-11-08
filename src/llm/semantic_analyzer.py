@@ -26,7 +26,7 @@ import hashlib
 import json
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from src.candidate_generation.window_generator import CandidateWindow
 from src.config import Config
@@ -86,9 +86,11 @@ class SemanticAnalyzer:
         boundary_cache_dir: str | Path = "outputs/cache/boundary_optimization",
         evaluation_cache_dir: str | Path = "outputs/cache/promo_evaluation",
         api_key: str | None = None,
+        progress_callback: Callable[[dict], None] | None = None,
     ) -> None:
         self.cfg = cfg
         self.api_key = api_key
+        self.progress_callback = progress_callback
 
         self.cache_dir = Path(cache_dir)
         self.boundary_cache_dir = Path(boundary_cache_dir)
@@ -158,6 +160,30 @@ class SemanticAnalyzer:
         """Whether the episode-analysis LLM client initialized."""
         return self._available
 
+    def _report_progress(
+        self,
+        stage: str,
+        current: int,
+        total: int,
+        message: str,
+        status: str = "running",
+    ) -> None:
+        """Send progress updates to an optional external callback."""
+
+        if self.progress_callback is None:
+            return
+
+        try:
+            self.progress_callback({
+                "stage": stage,
+                "current": current,
+                "total": total,
+                "message": message,
+                "status": status,
+            })
+        except Exception:
+            logger.exception("Progress callback failed.")
+
     # ========================================================
     # EPISODE-LEVEL ANALYSIS
     # ========================================================
@@ -187,9 +213,23 @@ class SemanticAnalyzer:
             len(ordered_episodes),
         )
 
+        self._report_progress(
+            "episode_analysis",
+            0,
+            len(ordered_episodes),
+            "Starting episode analysis",
+        )
+        
+
         for index, episode in enumerate(ordered_episodes):
             episode_name = str(
                 episode.get("episode", f"Episode {index + 1}")
+            )
+            self._report_progress(
+                "episode_analysis",
+                index,
+                len(ordered_episodes),
+                f"Analyzing {episode_name} ({index + 1}/{len(ordered_episodes)})",
             )
 
             logger.info(
@@ -216,6 +256,12 @@ class SemanticAnalyzer:
                         "candidate_moments": [],
                         "analysis_status": "failed",
                     })
+                    self._report_progress(
+                        "episode_analysis",
+                        index + 1,
+                        len(ordered_episodes),
+                        f"Processed {episode_name} ({index + 1}/{len(ordered_episodes)})",
+                    )
                     continue
 
                 analysis["episode"] = episode_name
@@ -237,6 +283,12 @@ class SemanticAnalyzer:
                     episode_name,
                     len(analysis["candidate_moments"]),
                 )
+                self._report_progress(
+                    "episode_analysis",
+                    index + 1,
+                    len(ordered_episodes),
+                    f"Processed {episode_name} ({index + 1}/{len(ordered_episodes)})",
+                )
 
             except Exception:
                 self.stats["episodes_failed"] += 1
@@ -254,6 +306,12 @@ class SemanticAnalyzer:
                     "candidate_moments": [],
                     "analysis_status": "failed",
                 })
+                self._report_progress(
+                    "episode_analysis",
+                    index + 1,
+                    len(ordered_episodes),
+                    f"Processed {episode_name} ({index + 1}/{len(ordered_episodes)})",
+                )
 
         logger.info(
             "Episode analysis complete: %d successful, %d failed, "
@@ -447,6 +505,13 @@ class SemanticAnalyzer:
 
         optimized_candidates: list[dict] = []
 
+        self._report_progress(
+            "boundary_optimization",
+            0,
+            len(candidates),
+            "Starting boundary optimization",
+        )
+
         for index, candidate in enumerate(candidates):
             result = dict(candidate)
             episode_name = str(candidate.get("episode", ""))
@@ -462,6 +527,12 @@ class SemanticAnalyzer:
                 result["boundary_error"] = "source_episode_not_found"
                 self.stats["boundary_candidates_failed"] += 1
                 optimized_candidates.append(result)
+                self._report_progress(
+                    "boundary_optimization",
+                    index + 1,
+                    len(candidates),
+                    f"Processed candidate {index + 1}/{len(candidates)}",
+                )
                 continue
 
             try:
@@ -487,6 +558,14 @@ class SemanticAnalyzer:
                 result["boundary_status"] = "failed"
                 self.stats["boundary_candidates_failed"] += 1
                 optimized_candidates.append(result)
+
+            self._report_progress(
+                "boundary_optimization",
+                index + 1,
+                len(candidates),
+                f"Processed {candidate.get('candidate_id', index)} "
+                f"({index + 1}/{len(candidates)})",
+            )
 
         logger.info(
             "Boundary optimization complete: %d optimized, %d failed, "
@@ -736,6 +815,13 @@ class SemanticAnalyzer:
 
         evaluated_candidates: list[dict] = []
 
+        self._report_progress(
+            "promo_evaluation",
+            0,
+            len(candidates),
+            "Starting promo evaluation",
+        )
+
         for index, candidate in enumerate(candidates):
             result = dict(candidate)
             candidate_id = candidate.get("candidate_id", index)
@@ -745,6 +831,12 @@ class SemanticAnalyzer:
                 result["evaluation_error"] = "boundary_not_optimized"
                 result["recommendation"] = "review"
                 evaluated_candidates.append(result)
+                self._report_progress(
+                    "promo_evaluation",
+                    index + 1,
+                    len(candidates),
+                    f"Processed {candidate_id} ({index + 1}/{len(candidates)})",
+                )
                 continue
 
             episode_name = str(candidate.get("episode", ""))
@@ -756,6 +848,12 @@ class SemanticAnalyzer:
                 result["recommendation"] = "review"
                 self.stats["evaluation_candidates_failed"] += 1
                 evaluated_candidates.append(result)
+                self._report_progress(
+                    "promo_evaluation",
+                    index + 1,
+                    len(candidates),
+                    f"Processed {candidate_id} ({index + 1}/{len(candidates)})",
+                )
                 continue
 
             try:
@@ -797,6 +895,13 @@ class SemanticAnalyzer:
                 result["recommendation"] = "review"
                 self.stats["evaluation_candidates_failed"] += 1
                 evaluated_candidates.append(result)
+
+            self._report_progress(
+                "promo_evaluation",
+                index + 1,
+                len(candidates),
+                f"Processed {candidate_id} ({index + 1}/{len(candidates)})",
+            )
 
         logger.info(
             "Promo evaluation complete: %d evaluated, %d failed, "

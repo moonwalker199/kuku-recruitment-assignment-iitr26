@@ -655,6 +655,7 @@ def run(
     output_root: str | Path = "outputs",
     cache_root: str | Path | None = None,
     api_key: str | None = None,
+    progress_callback=None,
 ) -> dict:
     """Execute discovery, optimization, evaluation and ranking."""
 
@@ -695,15 +696,46 @@ def run(
         "duplicate_promos_suppressed": 0,
     }
 
+    def report_progress(
+        stage: str,
+        current: int,
+        total: int,
+        message: str,
+        status: str = "running",
+    ) -> None:
+        if progress_callback is None:
+            return
+
+        try:
+            progress_callback({
+                "stage": stage,
+                "current": current,
+                "total": total,
+                "message": message,
+                "status": status,
+            })
+        except Exception:
+            logger.exception("Progress callback failed.")
+
 
     # --------------------------------------------------------
     # Stage 1: Load episodes
     # --------------------------------------------------------
 
+    report_progress("loading", 0, 1, "Loading uploaded episodes")
+
     with Timer() as load_timer:
         episodes = load_episodes(input_dir)
 
     stats["episodes_loaded"] = len(episodes)
+
+    report_progress(
+        "loading",
+        1,
+        1,
+        f"Loaded {len(episodes)} episodes",
+        "complete",
+    )
 
     logger.info(
         "Loaded %d episodes in %s.",
@@ -734,14 +766,26 @@ def run(
     if api_key:
         analyzer_kwargs["api_key"] = api_key
 
-    analyzer = SemanticAnalyzer(cfg, **analyzer_kwargs)
-
+    analyzer = SemanticAnalyzer(
+        cfg,
+        progress_callback=progress_callback,
+        **analyzer_kwargs,
+    )
     stats["llm_enabled"] = analyzer.is_available
     with Timer() as analysis_timer:
         episode_analyses = analyzer.analyze_episodes(
             episodes,
             max_candidates_per_episode=max_candidates_per_episode,
         )
+
+    report_progress(
+        "episode_analysis",
+        len(episodes),
+        len(episodes),
+        f"Analyzed {analyzer.stats.get('episodes_analyzed', len(episodes))} episodes; "
+        f"{analyzer.stats.get('candidates_discovered', 0)} candidates discovered",
+        "complete",
+    )
 
     logger.info(
         "Episode analysis completed: %d episodes analysed in %s.",
@@ -759,6 +803,14 @@ def run(
             episode_analyses,
         )
 
+    report_progress(
+        "preparation",
+        1,
+        1,
+        f"Prepared {len(candidates)} candidates",
+        "complete",
+    )
+
     logger.info(
         "Prepared %d candidates in %s.",
         len(candidates),
@@ -772,6 +824,14 @@ def run(
     shortlist = select_shortlist(
         candidates,
         shortlist_size=shortlist_size,
+    )
+
+    report_progress(
+        "shortlisting",
+        1,
+        1,
+        f"Selected {len(shortlist)} candidates for optimization",
+        "complete",
     )
 
     logger.info(
@@ -800,6 +860,14 @@ def run(
         episodes,
     )
 
+    report_progress(
+        "boundary_complete",
+        1,
+        1,
+        f"Boundary optimization processed {len(optimized_shortlist)} candidates",
+        "complete",
+    )
+
     logger.info(
         "Boundary optimization completed in %s.",
         boundary_timer,
@@ -814,6 +882,14 @@ def run(
             episodes=episodes,
             candidates=optimized_shortlist,
         )
+
+    report_progress(
+        "evaluation_complete",
+        1,
+        1,
+        f"Evaluated {len(evaluated_candidates)} candidates",
+        "complete",
+    )
 
     logger.info(
         "Promo evaluation completed in %s.",
@@ -864,6 +940,16 @@ def run(
         for candidate in ranked_candidates
         if candidate.get("recommendation") == "review"
     ]
+
+    report_progress(
+        "ranking",
+        1,
+        1,
+        f"Accepted: {len(accepted_candidates)} | "
+        f"Review: {len(review_candidates)} | "
+        f"Rejected: {len(rejected_candidates)}",
+        "complete",
+    )
 
     logger.info(
         "Final ranking: %d accepted, %d review, %d rejected, "
@@ -1028,6 +1114,14 @@ def run(
     })
 
     write_json(stats, stats_path)
+
+    report_progress(
+        "saving",
+        1,
+        1,
+        "All output files saved",
+        "complete",
+    )
 
     logger.info("Episode analyses: %s", analysis_path)
     logger.info("Discovered candidates: %s", discovered_path)

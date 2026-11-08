@@ -18,7 +18,7 @@ from main import run
 # --------------------------------------------------
 
 st.set_page_config(
-    page_title="AI Drama Promo Generator Pipelie",
+    page_title="Kuku Assignment",
 
     layout="wide",
 )
@@ -28,84 +28,112 @@ st.set_page_config(
 # --------------------------------------------------
 
 st.markdown(
+
     """
     <style>
-    /* Main application background */
-    .stApp {
-        background-color: #000107;
+
+    /* Overall theme */
+    .stApp,
+    [data-testid="stAppViewContainer"] {
+        background: #000107;
         color: #FFFFFF;
     }
-    /* Sidebar starts 0.5rem from the browser top */
-    [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
-    padding-top: 0.5rem !important;
-    margin-top: 0 !important;
-}
 
-/* Remove Streamlit's header offset */
-[data-testid="stSidebar"] > div:first-child {
-    padding-top: 0 !important;
-}
-}
+    h1, h2, h3 {
+        color: #FFFFFF !important;
+        letter-spacing: -0.3px;
+    }
 
-    /* Main content */
-    [data-testid="stAppViewContainer"] {
-        background-color: #000107;
+    .stCaption,
+    [data-testid="stCaptionContainer"] {
+        color: #A7A7AF !important;
+    }
+
+        /* Reduce empty space below the top navbar */
+    .block-container {
+        padding-top: 1.5rem !important;
+        padding-bottom: 2rem !important;
+    }
+
+    /* Reduce top spacing of the first content element */
+    .block-container > div:first-child {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
     }
 
     /* Sidebar */
     [data-testid="stSidebar"] {
-        background-color: #17181D;
+        background: #17181D;
         border-right: 1px solid #303139;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+        padding-top: 0.5rem !important;
     }
 
     [data-testid="stSidebar"] * {
         color: #FFFFFF;
     }
-    /* Keep sidebar help tooltips within the sidebar width */
+
+    /* Tooltips */
     [data-testid="stTooltipContent"] {
-    max-width: 260px !important;
-    
-    transparency: 0.4 !important;
-    width: 260px !important;
-    white-space: normal !important;
-    overflow-wrap: break-word !important;
-    word-break: normal !important;
-}
-
-    /* Headings */
-    h1, h2, h3 {
-        color: #FFFFFF !important;
+        max-width: 260px !important;
+        width: 260px !important;
+        white-space: normal !important;
+        overflow-wrap: break-word !important;
     }
 
-    /* Secondary text */
-    .stCaption, [data-testid="stCaptionContainer"] {
-        color: #A7A7AF !important;
+    /* Upload metrics and result metrics */
+    [data-testid="stMetric"] {
+        background: #17181D;
+        border: 1px solid #303139;
+        border-radius: 10px;
+        padding: 16px 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
     }
 
-    /* Primary buttons */
-    .stButton > button[kind="primary"] {
-        background-color: #EC1C24;
-        color: #FFFFFF;
-        border: 1px solid #EC1C24;
+    [data-testid="stMetricLabel"],
+    [data-testid="stMetricValue"],
+    [data-testid="stMetricDelta"] {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+
+    /* Center upload metric cards */
+    .upload-metrics [data-testid="stHorizontalBlock"] {
+        justify-content: center;
+    }
+
+    /* Buttons */
+    .stButton > button,
+    .stDownloadButton > button {
         border-radius: 8px;
         font-weight: 600;
+        min-height: 42px;
+        border: 1px solid #44454D;
+    }
+
+    .stButton > button[kind="primary"] {
+        background: #EC1C24;
+        color: #FFFFFF;
+        border: 1px solid #EC1C24;
     }
 
     .stButton > button[kind="primary"]:hover {
-        background-color: #C9161D;
+        background: #C9161D;
         border-color: #C9161D;
         color: #FFFFFF;
     }
 
-    /* Secondary buttons */
-    .stButton > button {
-        border-radius: 8px;
-        border-color: #44454D;
-    }
-
-    /* Input fields */
-    input, textarea, [data-baseweb="select"] > div {
-        background-color: #24252B !important;
+    /* Inputs */
+    input,
+    textarea,
+    [data-baseweb="select"] > div {
+        background: #24252B !important;
         color: #FFFFFF !important;
         border-color: #44454D !important;
     }
@@ -113,6 +141,7 @@ st.markdown(
     /* Tabs */
     button[data-baseweb="tab"] {
         color: #B8B8C0;
+        font-weight: 600;
     }
 
     button[data-baseweb="tab"][aria-selected="true"] {
@@ -120,14 +149,13 @@ st.markdown(
         border-bottom-color: #EC1C24 !important;
     }
 
-    /* Metrics and bordered containers */
-    [data-testid="stMetric"],
+    /* Expanders and dividers */
     [data-testid="stExpander"] {
-        background-color: #17181D;
+        background: #17181D;
+        border: 1px solid #303139;
         border-radius: 8px;
     }
 
-    /* Dividers */
     hr {
         border-color: #303139;
     }
@@ -136,13 +164,60 @@ st.markdown(
     a {
         color: #FF555B !important;
     }
+    /* Sidebar opening button */
+    /* Replace Streamlit sidebar toggle icon with hamburger */
+    [data-testid="collapsedControl"] svg {
+        display: none !important;
+    }
+
+    [data-testid="collapsedControl"] button {
+        position: relative;
+    }
+
+    [data-testid="collapsedControl"] button::after {
+        content: "☰";
+        font-size: 23px;
+        font-weight: 400;
+        color: inherit;
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        /* Center upload metrics: label, value and delta */
+    [data-testid="stMetric"] {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center !important;
+        text-align: center !important;
+    }
+
+    [data-testid="stMetricLabel"],
+    [data-testid="stMetricValue"],
+    [data-testid="stMetricDelta"] {
+        width: 100%;
+        display: flex;
+        justify-content: center !important;
+        text-align: center !important;
+    }
+
+    /* Data tables */
+    [data-testid="stDataFrame"] {
+        border: 1px solid #303139;
+        border-radius: 8px;
+        overflow: hidden;
+    }
     </style>
+
     """,
     unsafe_allow_html=True,
 )
 
 
-MAX_FILES = 75
+MAX_FILES = 70
 MAX_FILE_SIZE = 5 * 1024 * 1024
 MAX_TOTAL_SIZE = 50 * 1024 * 1024
 
@@ -164,52 +239,52 @@ def get_secret(name):
         return None
 
 
-def authenticate():
-    app_password = get_secret("APP_PASSWORD")
+# def authenticate():
+#     app_password = get_secret("APP_PASSWORD")
 
-    if not app_password:
-        st.error(
-            "APP_PASSWORD is not configured. "
-            "Add it to Streamlit Secrets before using the app."
-        )
-        st.stop()
+#     if not app_password:
+#         st.error(
+#             "APP_PASSWORD is not configured. "
+#             "Add it to Streamlit Secrets before using the app."
+#         )
+#         st.stop()
 
-    if st.session_state.get("authenticated", False):
-        return
+#     if st.session_state.get("authenticated", False):
+#         return
 
-    st.title("AI Drama Promo Generation Pipeline")
-    st.subheader("Authentication required")
+#     st.title("AI Drama Promo Generation Pipeline")
+#     st.subheader("Authentication required")
 
-    if "login_attempts" not in st.session_state:
-        st.session_state.login_attempts = 0
+#     if "login_attempts" not in st.session_state:
+#         st.session_state.login_attempts = 0
 
-    if st.session_state.login_attempts >= 5:
-        st.error(
-            "Too many failed attempts. "
-            "Refresh the session to try again."
-        )
-        st.stop()
+#     if st.session_state.login_attempts >= 5:
+#         st.error(
+#             "Too many failed attempts. "
+#             "Refresh the session to try again."
+#         )
+#         st.stop()
 
-    entered_password = st.text_input(
-        "Application password",
-        type="password",
-    )
+#     entered_password = st.text_input(
+#         "Application password",
+#         type="password",
+#     )
 
-    if st.button("Unlock application", type="primary"):
-        if hmac.compare_digest(
-            str(entered_password),
-            str(app_password),
-        ):
-            st.session_state.authenticated = True
-            st.rerun()
-        else:
-            st.session_state.login_attempts += 1
-            st.error("Incorrect password.")
+#     if st.button("Unlock application", type="primary"):
+#         if hmac.compare_digest(
+#             str(entered_password),
+#             str(app_password),
+#         ):
+#             st.session_state.authenticated = True
+#             st.rerun()
+#         else:
+#             st.session_state.login_attempts += 1
+#             st.error("Incorrect password.")
 
-    st.stop()
+#     st.stop()
 
 
-authenticate()
+# authenticate()
 
 
 # --------------------------------------------------
@@ -344,6 +419,8 @@ def parse_uploaded_files(uploaded_files, job_dir):
     return processed_dir, parse_summary
 
 
+
+
 def display_result_tab(title, data, filename):
     st.subheader(title)
 
@@ -355,8 +432,40 @@ def display_result_tab(title, data, filename):
         st.caption(f"{len(data)} records")
 
         if data:
+            display_data = []
+
+            for item in data:
+                row = dict(item)
+
+                # Put the final rank first in the ranked table
+                if title == "Ranked promo recommendations":
+                    rank_key = (
+                        "final_rank"
+                        if "final_rank" in row
+                        else "rank"
+                        if "rank" in row
+                        else None
+                    )
+
+                    if rank_key:
+                        row = {
+                            rank_key: row.pop(rank_key),
+                            **row,
+                        }
+
+                # Render nested values as readable JSON
+                for key, value in row.items():
+                    if isinstance(value, (dict, list)):
+                        row[key] = json.dumps(
+                            value,
+                            ensure_ascii=False,
+                            indent=2,
+                        )
+
+                display_data.append(row)
+
             st.dataframe(
-                data,
+                display_data,
                 use_container_width=True,
                 hide_index=True,
             )
@@ -365,19 +474,28 @@ def display_result_tab(title, data, filename):
     else:
         st.json(data)
 
+    # Download original, unmodified JSON
     show_json_download(title, data, filename)
-
 
 # --------------------------------------------------
 # MAIN INTERFACE
 # --------------------------------------------------
 
-st.title("AI Drama Promo Generator Pipeline")
 
-st.write(
-    "Upload screenplay episodes to discover, evaluate and rank "
-    "potential promotional clips."
+st.title("AI Drama Promo Generator")
+
+st.markdown(
+    """
+    Discover high-potential promotional moments from screenplay
+    episodes using a multi-stage AI pipeline.
+
+    Upload episodes, configure your model, and generate
+    ranked promo recommendations.
+    """
 )
+
+st.divider()
+
 
 
 # --------------------------------------------------
@@ -558,58 +676,87 @@ with st.sidebar:
 # FILE UPLOAD
 # --------------------------------------------------
 
-st.subheader("1. Upload screenplay files")
+
+# --------------------------------------------------
+# FILE UPLOAD
+# --------------------------------------------------
+
+st.subheader("1. Upload screenplay episodes")
+
+st.caption(
+    "Upload English screenplay TXT files. "
+    "You can upload fewer than 50 episodes for testing."
+)
 
 uploaded_files = st.file_uploader(
-    "Select up to 70 English screenplay TXT files",
+    "Choose screenplay files",
     type=["txt"],
     accept_multiple_files=True,
+    help="Upload up to 70 TXT files, with a maximum of 5 MB per file.",
 )
 
 if uploaded_files:
-
     total_size = sum(
         len(file.getvalue())
         for file in uploaded_files
     )
 
+    st.markdown('<div class="upload-metrics">', unsafe_allow_html=True)
+
     col1, col2, col3 = st.columns(3)
 
     col1.metric("Files uploaded", len(uploaded_files))
-    col2.metric(
-        "Total size",
-        f"{total_size / (1024 * 1024):.2f} MB",
-    )
-    col3.metric("Expected files", "50")
+    col2.metric("Total size", f"{total_size / (1024 * 1024):.2f} MB")
+    # col3.metric("Expected files", "50")
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
     if len(uploaded_files) < 50:
-        st.info(
-            "You uploaded fewer than 50 files. "
-            "This is allowed for testing."
+        st.caption(
+            "Testing mode: fewer than 50 episodes uploaded."
         )
 
-    with st.expander("Uploaded filenames"):
+    with st.expander("View uploaded filenames"):
         for file in uploaded_files:
-            st.write(file.name)
+            st.write(f"📄 {file.name}")
+
+#run button
 
 
 # --------------------------------------------------
 # RUN BUTTON
 # --------------------------------------------------
 
-st.warning(
-    "A full run can take several minutes because the pipeline "
-    "makes multiple model calls. Keep this page open while processing."
+st.divider()
+
+button_label = (
+    "Discover again"
+    if st.session_state.get("last_job_dir")
+    else "Parse and discover promos"
 )
 
-run_button = st.button(
-    "Parse and discover promos",
-    type="primary",
-    disabled=(
-        not uploaded_files
-        or not selected_model.strip()
-    ),
-)
+button_col1, button_col2, button_col3 = st.columns([1, 2, 1])
+
+with button_col2:
+    run_button = st.button(
+        button_label,
+        type="primary",
+        use_container_width=True,
+        disabled=(
+            not uploaded_files
+            or not selected_model.strip()
+        ),
+    )
+
+    # st.caption(
+    #     "Runs the complete pipeline on the currently uploaded episodes."
+    # )
+
+if uploaded_files:
+    st.caption(
+        "Processing may take several minutes depending on the "
+        "number of episodes and model response times."
+    )
 
 
 # --------------------------------------------------
@@ -725,6 +872,77 @@ if run_button:
                     "Step 3: Running the promo discovery pipeline..."
                 )
 
+                PIPELINE_STAGES = [
+                    ("loading", "Episode ingestion", "Loading and validating screenplay files"),
+                    ("episode_analysis", "Episode understanding & candidate discovery", "Analyzing story context and extracting promotional moments"),
+                    ("preparation", "Candidate preparation", "Validating source segments and calculating initial signals"),
+                    ("shortlisting", "Candidate shortlisting", "Selecting diverse candidates for further processing"),
+                    ("boundary_optimization", "Boundary optimization", "Refining promotional clip start and end points"),
+                    ("promo_evaluation", "Promo evaluation", "Evaluating hook, cliffhanger, clarity and emotional impact"),
+                    ("ranking", "Ranking and decision classification", "Classifying candidates into accepted, review and rejected"),
+                    ("saving", "Structured output generation", "Writing JSON results and execution statistics"),
+                ]
+
+                stage_order = [item[0] for item in PIPELINE_STAGES]
+                stage_progress = {
+                    stage: {"current": 0, "total": 0, "message": "Waiting", "status": "pending"}
+                    for stage in stage_order
+                }
+
+                progress_container = st.container()
+                overall_progress = progress_container.progress(0)
+                stage_placeholder = progress_container.empty()
+                activity_placeholder = progress_container.empty()
+
+                def render_pipeline_progress():
+                    completed = sum(
+                        1 for s in stage_progress.values()
+                        if s["status"] == "complete"
+                    )
+                    fraction = min(1.0, max(0.0, completed / len(stage_order)))
+                    overall_progress.progress(fraction)
+
+                    stage_lines = []
+                    for s_id, s_title, _ in PIPELINE_STAGES:
+                        st_info = stage_progress[s_id]
+                        status_sym = "⏳"
+                        if st_info["status"] == "complete":
+                            status_sym = "✅"
+                        elif st_info["status"] == "running":
+                            status_sym = "🔄"
+                        elif st_info["status"] == "failed":
+                            status_sym = "❌"
+
+                        msg = st_info["message"]
+                        if msg and msg != "Waiting":
+                            stage_lines.append(f"{status_sym} **{s_title}**: {msg}")
+                        else:
+                            stage_lines.append(f"{status_sym} **{s_title}**")
+
+                    stage_placeholder.markdown("\n\n".join(stage_lines))
+
+                def on_progress(event):
+                    stage = event.get("stage")
+                    stage_aliases = {
+                        "boundary_complete": "boundary_optimization",
+                        "evaluation_complete": "promo_evaluation",
+                    }
+                    stage = stage_aliases.get(stage, stage)
+                    if stage not in stage_progress:
+                        return
+
+                    event_status = event.get("status", "running")
+                    stage_progress[stage].update({
+                        "current": event.get("current", 0),
+                        "total": event.get("total", 0),
+                        "message": event.get("message", ""),
+                        "status": event_status,
+                    })
+                    render_pipeline_progress()
+                    activity_placeholder.caption(event.get("message", ""))
+
+                render_pipeline_progress()
+
                 run_kwargs = {
                     "input_dir": str(processed_dir),
                     "max_candidates_per_episode": int(max_candidates),
@@ -732,12 +950,18 @@ if run_button:
                     "output_root": job_dir / "outputs",
                     "cache_root": job_dir / "cache",
                     "api_key": effective_api_key,
+                    "progress_callback": on_progress,
                 }
 
                 stats = run(
                     cfg,
                     **run_kwargs,
                 )
+
+                for stage_key in stage_order:
+                    if stage_progress[stage_key]["status"] != "failed":
+                        stage_progress[stage_key]["status"] = "complete"
+                render_pipeline_progress()
 
                 write_json(
                     job_dir / "execution_stats.json",
@@ -759,6 +983,11 @@ if run_button:
 
         except Exception as exc:
 
+            for stage_key, s_data in stage_progress.items():
+                if s_data["status"] == "running":
+                    s_data["status"] = "failed"
+            render_pipeline_progress()
+
             st.error(f"Pipeline failed: {exc}")
             st.exception(exc)
 
@@ -777,7 +1006,11 @@ if st.session_state.get("last_job_dir"):
     output_dir = job_dir / "outputs"
 
     st.divider()
-    st.header("2. Pipeline results")
+    st.header("2. Results dashboard")
+    st.caption(
+        "Review ranked promotional candidates, evaluation decisions "
+        "and pipeline execution statistics."
+    )
 
     stats = st.session_state.get("last_stats", {})
 
@@ -785,22 +1018,24 @@ if st.session_state.get("last_job_dir"):
 
     metric_columns[0].metric(
         "Episodes analysed",
-        stats.get("episodes_analysed", "N/A"),
+        stats.get("episodes_analyzed", 0),
     )
 
     metric_columns[1].metric(
         "Candidates discovered",
-        stats.get("candidates_discovered", "N/A"),
+        stats.get("total_discovered_candidates", 0),
     )
 
     metric_columns[2].metric(
         "Candidates shortlisted",
-        stats.get("candidates_shortlisted", "N/A"),
+        stats.get("shortlisted_candidates", 0),
     )
 
     metric_columns[3].metric(
         "API calls",
-        stats.get("api_calls", "N/A"),
+        stats.get("api_calls", 0)
+        + stats.get("boundary_api_calls", 0)
+        + stats.get("evaluation_api_calls", 0),
     )
 
     st.caption(
