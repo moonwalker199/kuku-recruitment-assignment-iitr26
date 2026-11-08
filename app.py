@@ -239,52 +239,60 @@ def get_secret(name):
         return None
 
 
-# def authenticate():
-#     app_password = get_secret("APP_PASSWORD")
+def authenticate():
+    app_password = get_secret("APP_PASSWORD")
 
-#     if not app_password:
-#         st.error(
-#             "APP_PASSWORD is not configured. "
-#             "Add it to Streamlit Secrets before using the app."
-#         )
-#         st.stop()
+    if not app_password:
+        st.error(
+            "APP_PASSWORD is not configured. "
+            "Add it to Streamlit Secrets before using the app."
+        )
+        st.stop()
 
-#     if st.session_state.get("authenticated", False):
-#         return
+    if st.session_state.get("authenticated", False):
+        return
 
-#     st.title("AI Drama Promo Generation Pipeline")
-#     st.subheader("Authentication required")
+    st.title("AI Drama Promo Generation Pipeline")
+    st.subheader("Authentication required")
+    st.info(
+    "The application password is provided in the submission "
+    "Google Drive folder. You can find it in either "
+    "'1. Solution Doc.pdf' or '2. Links.pdf', "
+    "both submitted through the Google Form. "
+    "The password protection was added to prevent unauthorized "
+    "API calls, as the application is publicly deployed."
+)
 
-#     if "login_attempts" not in st.session_state:
-#         st.session_state.login_attempts = 0
+    if "login_attempts" not in st.session_state:
+        st.session_state.login_attempts = 0
 
-#     if st.session_state.login_attempts >= 5:
-#         st.error(
-#             "Too many failed attempts. "
-#             "Refresh the session to try again."
-#         )
-#         st.stop()
+    if st.session_state.login_attempts >= 5:
+        st.error(
+            "Too many failed attempts. "
+            "Refresh the session to try again."
+        )
+        st.stop()
 
-#     entered_password = st.text_input(
-#         "Application password",
-#         type="password",
-#     )
+    entered_password = st.text_input(
+        "Application password",
+        type="password",
+    )
 
-#     if st.button("Unlock application", type="primary"):
-#         if hmac.compare_digest(
-#             str(entered_password),
-#             str(app_password),
-#         ):
-#             st.session_state.authenticated = True
-#             st.rerun()
-#         else:
-#             st.session_state.login_attempts += 1
-#             st.error("Incorrect password.")
+    if st.button("Unlock application", type="primary"):
+        if hmac.compare_digest(
+            str(entered_password),
+            str(app_password),
+        ):
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.session_state.login_attempts += 1
+            st.error("Incorrect password.")
 
-#     st.stop()
+    st.stop()
 
 
-# authenticate()
+authenticate()
 
 
 # --------------------------------------------------
