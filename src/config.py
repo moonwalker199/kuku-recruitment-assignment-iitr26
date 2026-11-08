@@ -49,6 +49,7 @@ logger = logging.getLogger(__name__)
 class LLMConfig:
     provider: str = "google"
     model: str = "gemini-3.5-flash"
+    base_url: str | None = None
     temperature: float = 0.1
     max_output_tokens: int = 4096
     timeout_seconds: float = 120.0
@@ -321,6 +322,11 @@ def _build_llm_config(
     return LLMConfig(
         provider=str(merged.get("provider", "google")),
         model=str(merged.get("model", "gemini-3.5-flash")),
+        base_url=(
+            str(merged["base_url"]).strip()
+            if merged.get("base_url")
+            else None
+        ),
         temperature=float(merged.get("temperature", 0.1)),
         max_output_tokens=int(merged.get("max_output_tokens", 4096)),
         timeout_seconds=float(merged.get("timeout_seconds", 120.0)),
@@ -332,6 +338,7 @@ def _build_llm_config(
             if merged.get("thinking_level") is not None
             else None
         ),
+
     )
 
 
@@ -667,49 +674,71 @@ def _validate_llm_config(
     errors: list[str],
 ) -> None:
 
+    # if config.provider not in (
+    #     "google",
+    #     "openai",
+    # ):
+    #     errors.append(
+    #         f"{stage_name}.provider must be "
+    #         "'google' or 'openai'."
+    #     )
+
+    # if not config.model.strip():
+    #     errors.append(
+    #         f"{stage_name}.model cannot be empty."
+    #     )
+
+    # if not 0.0 <= config.temperature <= 2.0:
+    #     errors.append(
+    #         f"{stage_name}.temperature must be in [0, 2]."
+    #     )
+
+    # if config.max_output_tokens < 1:
+    #     errors.append(
+    #         f"{stage_name}.max_output_tokens must be >= 1."
+    #     )
+
+    # if config.timeout_seconds <= 0:
+    #     errors.append(
+    #         f"{stage_name}.timeout_seconds must be positive."
+    #     )
+
+    # if config.max_retries < 1:
+    #     errors.append(
+    #         f"{stage_name}.max_retries must be >= 1."
+    #     )
+
+    # if config.retry_delay_seconds < 0:
+    #     errors.append(
+    #         f"{stage_name}.retry_delay_seconds cannot be negative."
+    #     )
+
+    # if not 0.0 <= config.llm_score_threshold <= 1.0:
+    #     errors.append(
+    #         f"{stage_name}.llm_score_threshold must be in [0, 1]."
+    #     )
     if config.provider not in (
-        "google",
-        "openai",
-    ):
+    "google",
+    "openai",
+    "openai_compatible",
+):
         errors.append(
             f"{stage_name}.provider must be "
-            "'google' or 'openai'."
-        )
+            "'google', 'openai' or 'openai_compatible'."
+    )
 
-    if not config.model.strip():
+    if config.provider == "google" and config.base_url:
         errors.append(
-            f"{stage_name}.model cannot be empty."
-        )
+            f"{stage_name}.base_url is not supported "
+            "by the current native Gemini adapter."
+    )
 
-    if not 0.0 <= config.temperature <= 2.0:
+    if config.base_url and not config.base_url.startswith(
+        ("http://", "https://")
+):
         errors.append(
-            f"{stage_name}.temperature must be in [0, 2]."
-        )
-
-    if config.max_output_tokens < 1:
-        errors.append(
-            f"{stage_name}.max_output_tokens must be >= 1."
-        )
-
-    if config.timeout_seconds <= 0:
-        errors.append(
-            f"{stage_name}.timeout_seconds must be positive."
-        )
-
-    if config.max_retries < 1:
-        errors.append(
-            f"{stage_name}.max_retries must be >= 1."
-        )
-
-    if config.retry_delay_seconds < 0:
-        errors.append(
-            f"{stage_name}.retry_delay_seconds cannot be negative."
-        )
-
-    if not 0.0 <= config.llm_score_threshold <= 1.0:
-        errors.append(
-            f"{stage_name}.llm_score_threshold must be in [0, 1]."
-        )
+            f"{stage_name}.base_url must be a valid HTTP(S) URL."
+    )
 
 
 def _validate(cfg: Config) -> None:

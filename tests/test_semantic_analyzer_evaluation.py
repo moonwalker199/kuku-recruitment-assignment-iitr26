@@ -127,7 +127,7 @@ mock_client = MockLLMClient()
 initialized_stages = []
 
 
-def fake_from_config(cfg, stage=None):
+def fake_from_config(cfg, stage=None, api_key=None):
     initialized_stages.append(stage)
 
     if stage == "episode_analysis":

@@ -26,7 +26,7 @@ import hashlib
 import json
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from src.candidate_generation.window_generator import CandidateWindow
 from src.config import Config
@@ -59,10 +59,6 @@ LLM_FEATURE_KEYS = (
     "promotional_suitability",
 )
 
-# _ANALYSIS_VERSION = "episode_analysis_v1"
-# _BOUNDARY_VERSION = "boundary_optimization_v1"
-# _EVALUATION_VERSION = "promo_evaluation_v1"
-
 _ANALYSIS_VERSION = "episode_analysis_v2"
 _BOUNDARY_VERSION = "boundary_optimization_v2"
 _EVALUATION_VERSION = "promo_evaluation_v2"
@@ -89,8 +85,12 @@ class SemanticAnalyzer:
         cache_dir: str | Path = "outputs/cache/episode_analysis",
         boundary_cache_dir: str | Path = "outputs/cache/boundary_optimization",
         evaluation_cache_dir: str | Path = "outputs/cache/promo_evaluation",
+        api_key: str | None = None,
+        progress_callback: Callable[[dict], None] | None = None,
     ) -> None:
         self.cfg = cfg
+        self.api_key = api_key
+        self.progress_callback = progress_callback
 
         self.cache_dir = Path(cache_dir)
         self.boundary_cache_dir = Path(boundary_cache_dir)
@@ -142,6 +142,7 @@ class SemanticAnalyzer:
             self._client = LLMClient.from_config(
                 cfg,
                 stage="episode_analysis",
+                api_key=self.api_key,
             )
             self._available = True
 
@@ -159,6 +160,30 @@ class SemanticAnalyzer:
         """Whether the episode-analysis LLM client initialized."""
         return self._available
 
+    def _report_progress(
+        self,
+        stage: str,
+        current: int,
+        total: int,
+        message: str,
+        status: str = "running",
+    ) -> None:
+        """Send progress updates to an optional external callback."""
+
+        if self.progress_callback is None:
+            return
+
+        try:
+            self.progress_callback({
+                "stage": stage,
+                "current": current,
+                "total": total,
+                "message": message,
+                "status": status,
+            })
+        except Exception:
+            logger.exception("Progress callback failed.")
+
     # ========================================================
     # EPISODE-LEVEL ANALYSIS
     # ========================================================
@@ -168,14 +193,7 @@ class SemanticAnalyzer:
         episodes: list[dict],
         max_candidates_per_episode: int = 5,
     ) -> list[dict]:
-        """
-        Analyze complete episodes sequentially.
-
-        Each episode receives the running story summary from previous
-        successfully analyzed episodes.
-
-        Failed episodes are included with analysis_status="failed".
-        """
+        """Analyze complete episodes sequentially."""
 
         self.stats["episodes_received"] = len(episodes)
 
@@ -195,9 +213,23 @@ class SemanticAnalyzer:
             len(ordered_episodes),
         )
 
+        self._report_progress(
+            "episode_analysis",
+            0,
+            len(ordered_episodes),
+            "Starting episode analysis",
+        )
+        
+
         for index, episode in enumerate(ordered_episodes):
             episode_name = str(
                 episode.get("episode", f"Episode {index + 1}")
+            )
+            self._report_progress(
+                "episode_analysis",
+                index,
+                len(ordered_episodes),
+                f"Analyzing {episode_name} ({index + 1}/{len(ordered_episodes)})",
             )
 
             logger.info(
@@ -224,6 +256,12 @@ class SemanticAnalyzer:
                         "candidate_moments": [],
                         "analysis_status": "failed",
                     })
+                    self._report_progress(
+                        "episode_analysis",
+                        index + 1,
+                        len(ordered_episodes),
+                        f"Processed {episode_name} ({index + 1}/{len(ordered_episodes)})",
+                    )
                     continue
 
                 analysis["episode"] = episode_name
@@ -245,6 +283,12 @@ class SemanticAnalyzer:
                     episode_name,
                     len(analysis["candidate_moments"]),
                 )
+                self._report_progress(
+                    "episode_analysis",
+                    index + 1,
+                    len(ordered_episodes),
+                    f"Processed {episode_name} ({index + 1}/{len(ordered_episodes)})",
+                )
 
             except Exception:
                 self.stats["episodes_failed"] += 1
@@ -262,6 +306,12 @@ class SemanticAnalyzer:
                     "candidate_moments": [],
                     "analysis_status": "failed",
                 })
+                self._report_progress(
+                    "episode_analysis",
+                    index + 1,
+                    len(ordered_episodes),
+                    f"Processed {episode_name} ({index + 1}/{len(ordered_episodes)})",
+                )
 
         logger.info(
             "Episode analysis complete: %d successful, %d failed, "
@@ -340,7 +390,6 @@ class SemanticAnalyzer:
             return None
 
         # Diagnostic capture: save each raw episode response before parsing.
-        # This helps investigate malformed or truncated JSON responses.
         safe_episode_name = "".join(
             char if char.isalnum() or char in ("-", "_") else "_"
             for char in episode_name.lower().replace(" ", "_")
@@ -403,14 +452,7 @@ class SemanticAnalyzer:
         episodes: list[dict],
         candidates: list[dict],
     ) -> list[dict]:
-        """
-        Optimize candidate start/end boundaries using a separate LLM stage.
-
-        Python generates valid boundary alternatives. The LLM selects
-        one of those alternatives and cannot invent timestamps or IDs.
-
-        Returns copies of all input candidates.
-        """
+        """Optimize candidate start/end boundaries using a separate LLM stage."""
 
         self.stats["boundary_candidates_received"] = len(candidates)
 
@@ -435,6 +477,7 @@ class SemanticAnalyzer:
                 self._boundary_client = LLMClient.from_config(
                     self.cfg,
                     stage="boundary_optimization",
+                    api_key=self.api_key,
                 )
                 self._boundary_available = True
 
@@ -462,6 +505,13 @@ class SemanticAnalyzer:
 
         optimized_candidates: list[dict] = []
 
+        self._report_progress(
+            "boundary_optimization",
+            0,
+            len(candidates),
+            "Starting boundary optimization",
+        )
+
         for index, candidate in enumerate(candidates):
             result = dict(candidate)
             episode_name = str(candidate.get("episode", ""))
@@ -477,6 +527,12 @@ class SemanticAnalyzer:
                 result["boundary_error"] = "source_episode_not_found"
                 self.stats["boundary_candidates_failed"] += 1
                 optimized_candidates.append(result)
+                self._report_progress(
+                    "boundary_optimization",
+                    index + 1,
+                    len(candidates),
+                    f"Processed candidate {index + 1}/{len(candidates)}",
+                )
                 continue
 
             try:
@@ -502,6 +558,14 @@ class SemanticAnalyzer:
                 result["boundary_status"] = "failed"
                 self.stats["boundary_candidates_failed"] += 1
                 optimized_candidates.append(result)
+
+            self._report_progress(
+                "boundary_optimization",
+                index + 1,
+                len(candidates),
+                f"Processed {candidate.get('candidate_id', index)} "
+                f"({index + 1}/{len(candidates)})",
+            )
 
         logger.info(
             "Boundary optimization complete: %d optimized, %d failed, "
@@ -684,16 +748,7 @@ class SemanticAnalyzer:
         episodes: list[dict],
         candidates: list[dict],
     ) -> list[dict]:
-        """
-        Evaluate boundary-optimized promo candidates.
-
-        Only candidates with boundary_status="success" are evaluated.
-        Candidates whose boundary optimization was skipped or failed are
-        preserved and marked for manual review.
-
-        The evaluation validator calculates the weighted score and
-        recommendation in Python.
-        """
+        """Evaluate boundary-optimized promo candidates."""
 
         self.stats["evaluation_candidates_received"] = len(candidates)
 
@@ -725,6 +780,7 @@ class SemanticAnalyzer:
                 self._evaluation_client = LLMClient.from_config(
                     self.cfg,
                     stage="promo_evaluation",
+                    api_key=self.api_key,
                 )
                 self._evaluation_available = True
 
@@ -759,16 +815,28 @@ class SemanticAnalyzer:
 
         evaluated_candidates: list[dict] = []
 
+        self._report_progress(
+            "promo_evaluation",
+            0,
+            len(candidates),
+            "Starting promo evaluation",
+        )
+
         for index, candidate in enumerate(candidates):
             result = dict(candidate)
             candidate_id = candidate.get("candidate_id", index)
 
-            # Do not evaluate clips whose boundaries were not validated.
             if candidate.get("boundary_status") != "success":
                 result["evaluation_status"] = "skipped"
                 result["evaluation_error"] = "boundary_not_optimized"
                 result["recommendation"] = "review"
                 evaluated_candidates.append(result)
+                self._report_progress(
+                    "promo_evaluation",
+                    index + 1,
+                    len(candidates),
+                    f"Processed {candidate_id} ({index + 1}/{len(candidates)})",
+                )
                 continue
 
             episode_name = str(candidate.get("episode", ""))
@@ -780,6 +848,12 @@ class SemanticAnalyzer:
                 result["recommendation"] = "review"
                 self.stats["evaluation_candidates_failed"] += 1
                 evaluated_candidates.append(result)
+                self._report_progress(
+                    "promo_evaluation",
+                    index + 1,
+                    len(candidates),
+                    f"Processed {candidate_id} ({index + 1}/{len(candidates)})",
+                )
                 continue
 
             try:
@@ -787,11 +861,6 @@ class SemanticAnalyzer:
                     episode=episode,
                     candidate=candidate,
                 )
-
-                # if evaluation is None:
-                #     result["evaluation_status"] = "failed"
-                #     result["recommendation"] = "review"
-                #     self.stats["evaluation_candidates_failed"] += 1
 
                 if evaluation is None:
                     result["evaluation_status"] = "failed"
@@ -827,6 +896,13 @@ class SemanticAnalyzer:
                 self.stats["evaluation_candidates_failed"] += 1
                 evaluated_candidates.append(result)
 
+            self._report_progress(
+                "promo_evaluation",
+                index + 1,
+                len(candidates),
+                f"Processed {candidate_id} ({index + 1}/{len(candidates)})",
+            )
+
         logger.info(
             "Promo evaluation complete: %d evaluated, %d failed, "
             "%d cached, %d accepted, %d review, %d rejected, "
@@ -851,7 +927,6 @@ class SemanticAnalyzer:
 
         candidate_id = str(candidate.get("candidate_id", "UNKNOWN"))
 
-        # Clear any previous diagnostic value.
         candidate.pop("evaluation_error", None)
 
         cache_path = self._get_evaluation_cache_path(
@@ -886,7 +961,7 @@ class SemanticAnalyzer:
                 episode=episode,
                 candidate=candidate,
             )
-        except Exception as exc:
+        except Exception:
             candidate["evaluation_error"] = "prompt_construction_failed"
             logger.exception(
                 "Could not build promo evaluation prompt for %s.",
@@ -926,7 +1001,6 @@ class SemanticAnalyzer:
             self.stats["evaluation_failed_calls"] += 1
             candidate["evaluation_error"] = "response_validation_failed"
 
-            # Preserve the raw response for debugging.
             safe_candidate_id = "".join(
                 char if char.isalnum() or char in ("-", "_") else "_"
                 for char in candidate_id
@@ -967,6 +1041,7 @@ class SemanticAnalyzer:
         self._write_cache(cache_path, raw_response)
 
         return self._format_evaluation_result(validated)
+
     @staticmethod
     def _format_evaluation_result(validated: dict) -> dict:
         """Return normalized evaluation fields for a candidate."""
