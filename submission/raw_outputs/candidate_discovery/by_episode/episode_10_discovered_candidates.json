@@ -1,0 +1,172 @@
+[
+  {
+    "candidate_id": "Episode 10_C03",
+    "start_segment_id": "E10_S1_053",
+    "end_segment_id": "E10_S1_060",
+    "segment_ids": [
+      "E10_S1_053",
+      "E10_S1_054",
+      "E10_S1_055",
+      "E10_S1_056",
+      "E10_S1_057",
+      "E10_S1_058",
+      "E10_S1_059",
+      "E10_S1_060"
+    ],
+    "start_seconds": 71.5,
+    "end_seconds": 94.0,
+    "duration_seconds": 22.5,
+    "hook": "Alexander leans in close to Juliana with intense, heavy breathing, instantly establishing romantic tension.",
+    "cliffhanger": "Alexander declares that her touch is the only medicine that has ever eased his pain as they gaze into each other's eyes, ending on a deeply romantic and emotional note.",
+    "standalone_clarity": "The romantic tension and confession are universally understandable, highlighting the emotional core of the relationship.",
+    "narrative_context": "While Juliana tends to Alexander's wounds, their mutual attraction boils over into an intimate confession.",
+    "promotional_strength": "Appeals strongly to viewers interested in romance, emotional vulnerability, and high-chemistry character dynamics.",
+    "evidence": [
+      {
+        "segment_id": "E10_S1_057",
+        "timestamp": "01:19.00-01:22.50",
+        "observation": "Alexander takes Juliana's hands and places them over his racing heart."
+      },
+      {
+        "segment_id": "E10_S1_059",
+        "timestamp": "01:22.60-01:25.90",
+        "observation": "Alexander tells Juliana her touch is the only medicine that has ever eased his pain."
+      }
+    ],
+    "candidate_confidence": 0.95,
+    "episode": "Episode 10",
+    "logline": "When Alexander returns to the cottage gravely wounded and soaked in blood, Juliana tends to his injuries, leading to an intimate confrontation where their unspoken feelings and scarred pasts finally collide.",
+    "source_file": "010_episode-010-Episode_1671712.txt",
+    "source_segments": [
+      {
+        "segment_id": "E10_S1_053",
+        "scene_number": 1,
+        "kind": "camera",
+        "label": "CAMERA",
+        "speaker": null,
+        "delivery": null,
+        "start": "01:11.50",
+        "end": "01:14.50",
+        "start_seconds": 71.5,
+        "end_seconds": 74.5,
+        "duration_seconds": 3.0,
+        "text": "Medium shot of Alexander leaning closer to her, his breathing heavy.",
+        "source_line": 222
+      },
+      {
+        "segment_id": "E10_S1_054",
+        "scene_number": 1,
+        "kind": "dialogue",
+        "label": "ALEXANDER (Low, Husky)",
+        "speaker": "ALEXANDER",
+        "delivery": "Low, Husky",
+        "start": "01:12.10",
+        "end": "01:14.20",
+        "start_seconds": 72.1,
+        "end_seconds": 74.2,
+        "duration_seconds": 2.1,
+        "text": "I am holding still.",
+        "source_line": 226
+      },
+      {
+        "segment_id": "E10_S1_055",
+        "scene_number": 1,
+        "kind": "camera",
+        "label": "CAMERA",
+        "speaker": null,
+        "delivery": null,
+        "start": "01:14.50",
+        "end": "01:17.00",
+        "start_seconds": 74.5,
+        "end_seconds": 77.0,
+        "duration_seconds": 2.5,
+        "text": "Close-up two-shot of their faces drawing mere inches apart in the warm firelight.",
+        "source_line": 230
+      },
+      {
+        "segment_id": "E10_S1_056",
+        "scene_number": 1,
+        "kind": "dialogue",
+        "label": "ALEXANDER (Whispering, Vulnerable)",
+        "speaker": "ALEXANDER",
+        "delivery": "Whispering, Vulnerable",
+        "start": "01:16.80",
+        "end": "01:19.00",
+        "start_seconds": 76.8,
+        "end_seconds": 79.0,
+        "duration_seconds": 2.2,
+        "text": "Perhaps it is your hand.",
+        "source_line": 234
+      },
+      {
+        "segment_id": "E10_S1_057",
+        "scene_number": 1,
+        "kind": "camera",
+        "label": "CAMERA",
+        "speaker": null,
+        "delivery": null,
+        "start": "01:19.00",
+        "end": "01:22.50",
+        "start_seconds": 79.0,
+        "end_seconds": 82.5,
+        "duration_seconds": 3.5,
+        "text": "Close-up of Alexander's large, rough hands reaching up and gently enveloping Juliana's slender hands, bringing them against his bare chest over his racing heart.",
+        "source_line": 238
+      },
+      {
+        "segment_id": "E10_S1_058",
+        "scene_number": 1,
+        "kind": "camera",
+        "label": "CAMERA",
+        "speaker": null,
+        "delivery": null,
+        "start": "01:22.50",
+        "end": "01:26.50",
+        "start_seconds": 82.5,
+        "end_seconds": 86.5,
+        "duration_seconds": 4.0,
+        "text": "Close-up shot of Alexander gazing into Juliana's eyes with raw, unmasked devotion.",
+        "source_line": 242
+      },
+      {
+        "segment_id": "E10_S1_059",
+        "scene_number": 1,
+        "kind": "dialogue",
+        "label": "ALEXANDER (Deep, Emotional)",
+        "speaker": "ALEXANDER",
+        "delivery": "Deep, Emotional",
+        "start": "01:22.60",
+        "end": "01:25.90",
+        "start_seconds": 82.6,
+        "end_seconds": 85.9,
+        "duration_seconds": 3.3,
+        "text": "Your touch is the only medicine that has ever eased my pain.",
+        "source_line": 246
+      },
+      {
+        "segment_id": "E10_S1_060",
+        "scene_number": 1,
+        "kind": "camera",
+        "label": "CAMERA",
+        "speaker": null,
+        "delivery": null,
+        "start": "01:26.50",
+        "end": "01:34.00",
+        "start_seconds": 86.5,
+        "end_seconds": 94.0,
+        "duration_seconds": 7.5,
+        "text": "Close-up shot holding on Juliana's wide, luminous blue eyes, completely captivated and overwhelmed by his confession, the firelight dancing across their intertwined hands as the scene lingers and fades.",
+        "source_line": 250
+      }
+    ],
+    "structural_signals": {
+      "dialogue_share": 0.375,
+      "speaker_diversity": 0.25,
+      "scene_diversity": 0.3333,
+      "kind_transition_ratio": 0.8571,
+      "segment_density": 0.3556,
+      "structural_score": 0.431
+    },
+    "preliminary_score": 0.5867
+  }
+]
