@@ -260,7 +260,7 @@ def authenticate():
     "'1. Solution Doc.pdf' or '2. Links.pdf', "
     "both submitted through the Google Form. "
     "The password protection was added to prevent unauthorized "
-    "API calls, as the application is publicly deployed."
+    "API calls, as the application is publicly deployed. Thank you :)"
 )
 
     if "login_attempts" not in st.session_state:
