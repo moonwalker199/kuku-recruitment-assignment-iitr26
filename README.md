@@ -101,7 +101,7 @@ The pipeline combines deterministic Python processing with LLM-based narrative a
 
 ### Solution Architecture
 
-![Solution Architecture Flowchart](assets/mermaid%20web.png)
+![Solution Architecture Flowchart](flowchart.png)
 
 ### Stage 1: Screenplay ingestion
 
