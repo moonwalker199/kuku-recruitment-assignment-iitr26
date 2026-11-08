@@ -16,6 +16,7 @@ from main import run
 # --------------------------------------------------
 # APP CONFIGURATION
 # --------------------------------------------------
+#
 
 st.set_page_config(
     page_title="Kuku Assignment",
