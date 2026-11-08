@@ -101,8 +101,9 @@ The pipeline combines deterministic Python processing with LLM-based narrative a
 
 ### Solution Architecture
 
-![Solution Architecture Flowchart](flowchart.png)
-
+<p align="center">
+  <img src="flowchart.png" alt="Solution Architecture Flowchart" width="500"/>
+</p>
 ### Stage 1: Screenplay ingestion
 
 - Reads screenplay TXT files.
@@ -246,7 +247,7 @@ The token reservation mechanism estimates token usage before an API request and 
 
 ## 8. Current Run Results
 
-The completed run processed all 50 supplied episodes.
+One of the completed run processed all 50 supplied episodes.
 
 | Metric | Result |
 |---|---:|
