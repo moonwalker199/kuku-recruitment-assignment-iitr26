@@ -2,7 +2,7 @@
 
 An AI-assisted Python pipeline for discovering, optimizing, evaluating, and ranking promotional moments from screenplay episodes.
 
-## 1. Project Setup
+## 1. Quick Start
 
 ### Prerequisites
 
@@ -11,16 +11,15 @@ An AI-assisted Python pipeline for discovering, optimizing, evaluating, and rank
 
 ### Install dependencies
 
-Clone or extract the project and navigate to its root directory:
+Clone the repository and open a terminal in the repository root directory.
 
 ```bash
-cd "Assignment Solution"
 pip install -r requirements.txt
 ```
 
 ### Configure API credentials
 
-Create a `.env` file in the project root.
+Create a `.env` file in the repository root.
 
 For Google Gemini:
 
@@ -36,7 +35,39 @@ For OpenAI, if using that provider:
 OPENAI_API_KEY=your_api_key_here
 ```
 
-Keep API credentials private and do not commit the `.env` file to version control.
+### Run the project
+
+There are two ways to execute the pipeline:
+
+**Option 1: Command-line interface**
+
+```bash
+python main.py
+```
+
+To view available command-line options:
+
+```bash
+python main.py --help
+```
+
+**Option 2: Interactive Streamlit application**
+
+```bash
+streamlit run app.py
+```
+
+The web application provides live progress tracking, BYOK API key input, candidate exploration, and results visualization.
+
+### Validate parsed screenplay data
+
+To check the consistency of processed episode JSON files against their original screenplay TXT files:
+
+```bash
+python validate.py
+```
+
+All commands above should be executed from the repository root.
 
 ## 2. Configuration
 
@@ -59,51 +90,14 @@ The current configuration uses:
 
 The provider and model can be changed through the configuration file. Actual model availability and API quotas depend on the provider account.
 
-## 3. Running the Pipeline
+## 3. Processing Algorithm  [My Solution to the Assignment]
 
-### CLI Execution
-
-From the project root, execute:
-
-```bash
-python main.py
-```
-
-To view available command-line options:
-
-```bash
-python main.py --help
-```
-
-The CLI supports custom configuration and input paths, candidate limits, shortlist size, and verbose logging.
-
-### Interactive Web UI (Streamlit)
-
-You can also run the full pipeline through an interactive web application that provides live progress tracking, BYOK API key input, candidate exploration, and results visualization:
-
-```bash
-streamlit run app.py
-```
-
-### Validate parsed screenplay data
-
-After parsing, validate the original screenplay files against their corresponding processed JSON representations:
-
-```bash
-python validate.py
-```
-
-This checks the consistency of the parsed data against the source TXT files.
-
-## 4. Processing Algorithm
-
-The pipeline combines deterministic Python processing with LLM-based narrative and promotional evaluation.
+The pipeline combines deterministic Python processing with LLM-based narrative analysis and promotional evaluation.
 
 ### Solution Architecture
 
-<p align="center">
-  <img src="assets\flowchart.png" alt="Solution Architecture Flowchart" width="500"/>
-</p>
+![Solution Architecture Flowchart](flowchart.png)
+
 ### Stage 1: Screenplay ingestion
 
 - Reads screenplay TXT files.
@@ -123,16 +117,20 @@ Episode analysis responses are cached to avoid unnecessary repeated API calls.
 ### Stage 3: Candidate validation and structural shortlisting
 
 Python prepares and validates the discovered candidates against the original screenplay.
+The structural pre-ranking score combines the following signals:
 
-It extracts structural signals including:
+| Structural Signal | Weight |
+|---|---:|
+| Dialogue share | 25% |
+| Speaker diversity | 25% |
+| Scene diversity | 15% |
+| Segment transitions | 20% |
+| Segment density | 15% |
+| **Total** | **100%** |
 
-- Dialogue share
-- Speaker diversity
-- Scene diversity
-- Segment transitions
-- Segment density
+These structural signals are then combined with the LLM-generated candidate confidence to prioritize candidates before boundary optimization and promotional quality evaluation.
 
-These signals are combined with the LLM's candidate confidence to prioritize candidates. The resulting shortlist limits the number of candidates sent for more expensive processing.
+The resulting shortlist limits the number of candidates sent for more expensive processing.
 
 ### Stage 4: Boundary optimization
 
@@ -180,7 +178,7 @@ These are implementation-level decision thresholds, not official Kuku FM accepta
 
 The pipeline exports ranked recommendations, classification files, rejected candidate records, and execution statistics.
 
-## 5. Output Structure
+## 4. Output Structure
 
 The main output files are generated under `outputs/`.
 
@@ -195,12 +193,10 @@ The main output files are generated under `outputs/`.
 
 Other intermediate candidate files, cached responses, and episode-level reports are stored in their respective output directories.
 
-## 6. Project Structure
+## 5. Project Structure
 
 ```text
-Assignment Solution/
-├── assets/
-│   └── mermaid web.png       # Solution architecture flowchart
+Repository Root/
 ├── config/
 │   └── config.yaml
 ├── data/
@@ -211,7 +207,7 @@ Assignment Solution/
 │   ├── cache/                # Cached LLM responses and rate-limit state
 │   ├── episode_analysis/     # Episode-level narrative analysis results
 │   ├── ranked_promos/        # Ranked, accepted, and review outputs
-│   ├── rejected_candidates/ # Rejected and suppressed candidates
+│   ├── rejected_candidates/  # Rejected and suppressed candidates
 │   ├── reports/              # Episode-level reports and statistics
 │   └── streamlit_jobs/       # Job outputs from interactive UI runs
 ├── src/
@@ -224,14 +220,15 @@ Assignment Solution/
 │   ├── ranking/
 │   └── validation/
 ├── tests/
-├── .env                      # API keys (user-created, git-ignored)
-├── app.py                    # Streamlit web application & review UI
+├── flowchart.png             # Solution architecture flowchart
+├── app.py                    # Streamlit web application and review UI
 ├── main.py                   # Pipeline CLI entry point
 ├── validate.py               # Parser parity verification script
 └── requirements.txt          # Python dependencies
 ```
 
-## 7. Reliability and API Usage
+
+## 6. Reliability and API Usage
 
 The implementation includes:
 
@@ -245,9 +242,9 @@ The implementation includes:
 
 The token reservation mechanism estimates token usage before an API request and updates the estimate using reported usage after a successful response. It acts as a local safeguard and does not guarantee exact provider quota enforcement.
 
-## 8. Current Run Results
+## 7. Current Run Results
 
-One of the completed run processed all 50 supplied episodes.
+One of the completed run that processed all 50 supplied episodes gave the following numbers:
 
 | Metric | Result |
 |---|---:|
@@ -266,8 +263,8 @@ One of the completed run processed all 50 supplied episodes.
 
 Episode analysis used cached responses during the final run. Boundary optimization and promotional evaluation made 60 API calls combined, of which 59 succeeded.
 
-## 9. Credits & Acknowledgments
+## 8. Credits & Acknowledgments
 
-- **Developer**: Debangan (IIT Roorkee)
-- **Organization**: Built for the Kuku Technologies Campus Recruitment Assignment
-- **Technologies**: Python 3.10+, Google GenAI SDK (Gemini), OpenAI API, Streamlit, KaTeX / Markdown
+- **Developer:** Debangan (IIT Roorkee)
+- **Organization:** Built for the Kuku Technologies Campus Recruitment Assignment
+- **Technologies:** Python 3.10+, Google GenAI SDK (Gemini), OpenAI API, Streamlit, KaTeX / Markdown
